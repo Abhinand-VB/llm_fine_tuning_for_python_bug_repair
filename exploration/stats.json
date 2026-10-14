@@ -1,0 +1,407 @@
+{
+  "mbpp_total": 974,
+  "mbpp_splits": {
+    "prompt": {
+      "tasks": 10,
+      "parse_failures": [],
+      "code_lines": {
+        "mean": 6,
+        "median": 4.0,
+        "p90": 11,
+        "max": 13
+      },
+      "code_chars": {
+        "mean": 162.5,
+        "median": 119.5,
+        "p90": 239,
+        "max": 424
+      },
+      "problem_chars": {
+        "mean": 91.7,
+        "median": 96.0,
+        "p90": 102,
+        "max": 144
+      },
+      "tests_per_task": {
+        "3": 10
+      },
+      "with_setup_code": 0,
+      "with_challenge_tests": 0,
+      "with_class": 0,
+      "multi_function": 1,
+      "uses_crlf": 10,
+      "uses_tabs": 2,
+      "syntax_warnings": 0,
+      "shadows_builtin": 1,
+      "top_imports": [
+        [
+          "heapq",
+          2
+        ],
+        [
+          "math",
+          1
+        ],
+        [
+          "re",
+          1
+        ]
+      ],
+      "tasks_with_import": 4,
+      "mutation_sites_mean": {
+        "operator": 3.8,
+        "boundary": 5.1,
+        "variable": 8.6
+      },
+      "tasks_with_site": {
+        "operator": 7,
+        "boundary": 4,
+        "variable": 9
+      }
+    },
+    "test": {
+      "tasks": 500,
+      "parse_failures": [],
+      "code_lines": {
+        "mean": 6.75,
+        "median": 5.0,
+        "p90": 13,
+        "max": 50
+      },
+      "code_chars": {
+        "mean": 184.48,
+        "median": 144.5,
+        "p90": 347,
+        "max": 1282
+      },
+      "problem_chars": {
+        "mean": 78.63,
+        "median": 77.0,
+        "p90": 104,
+        "max": 191
+      },
+      "tests_per_task": {
+        "3": 500
+      },
+      "with_setup_code": 1,
+      "with_challenge_tests": 11,
+      "with_class": 2,
+      "multi_function": 24,
+      "uses_crlf": 499,
+      "uses_tabs": 73,
+      "syntax_warnings": 7,
+      "shadows_builtin": 52,
+      "top_imports": [
+        [
+          "re",
+          32
+        ],
+        [
+          "math",
+          22
+        ],
+        [
+          "collections",
+          14
+        ],
+        [
+          "heapq",
+          9
+        ],
+        [
+          "itertools",
+          4
+        ],
+        [
+          "operator",
+          2
+        ],
+        [
+          "sys",
+          2
+        ],
+        [
+          "cmath",
+          2
+        ],
+        [
+          "array",
+          2
+        ],
+        [
+          "copy",
+          1
+        ]
+      ],
+      "tasks_with_import": 87,
+      "mutation_sites_mean": {
+        "operator": 3.79,
+        "boundary": 2.28,
+        "variable": 7.7
+      },
+      "tasks_with_site": {
+        "operator": 390,
+        "boundary": 266,
+        "variable": 454
+      }
+    },
+    "validation": {
+      "tasks": 90,
+      "parse_failures": [],
+      "code_lines": {
+        "mean": 6.93,
+        "median": 6.0,
+        "p90": 13,
+        "max": 22
+      },
+      "code_chars": {
+        "mean": 185.09,
+        "median": 144.0,
+        "p90": 405,
+        "max": 567
+      },
+      "problem_chars": {
+        "mean": 77.87,
+        "median": 73.0,
+        "p90": 102,
+        "max": 146
+      },
+      "tests_per_task": {
+        "3": 90
+      },
+      "with_setup_code": 0,
+      "with_challenge_tests": 0,
+      "with_class": 0,
+      "multi_function": 6,
+      "uses_crlf": 90,
+      "uses_tabs": 13,
+      "syntax_warnings": 1,
+      "shadows_builtin": 9,
+      "top_imports": [
+        [
+          "re",
+          5
+        ],
+        [
+          "math",
+          3
+        ],
+        [
+          "sys",
+          2
+        ],
+        [
+          "array",
+          1
+        ],
+        [
+          "heapq",
+          1
+        ],
+        [
+          "cmath",
+          1
+        ]
+      ],
+      "tasks_with_import": 13,
+      "mutation_sites_mean": {
+        "operator": 3.56,
+        "boundary": 2.36,
+        "variable": 8.13
+      },
+      "tasks_with_site": {
+        "operator": 63,
+        "boundary": 49,
+        "variable": 82
+      }
+    },
+    "train": {
+      "tasks": 374,
+      "parse_failures": [],
+      "code_lines": {
+        "mean": 6.53,
+        "median": 5.0,
+        "p90": 12,
+        "max": 29
+      },
+      "code_chars": {
+        "mean": 178.22,
+        "median": 139.0,
+        "p90": 347,
+        "max": 904
+      },
+      "problem_chars": {
+        "mean": 78.43,
+        "median": 77.5,
+        "p90": 103,
+        "max": 249
+      },
+      "tests_per_task": {
+        "3": 374
+      },
+      "with_setup_code": 1,
+      "with_challenge_tests": 0,
+      "with_class": 2,
+      "multi_function": 17,
+      "uses_crlf": 373,
+      "uses_tabs": 41,
+      "syntax_warnings": 10,
+      "shadows_builtin": 25,
+      "top_imports": [
+        [
+          "re",
+          40
+        ],
+        [
+          "math",
+          16
+        ],
+        [
+          "collections",
+          13
+        ],
+        [
+          "itertools",
+          8
+        ],
+        [
+          "heapq",
+          6
+        ],
+        [
+          "sys",
+          4
+        ],
+        [
+          "bisect",
+          2
+        ],
+        [
+          "cmath",
+          1
+        ],
+        [
+          "operator",
+          1
+        ],
+        [
+          "datetime",
+          1
+        ]
+      ],
+      "tasks_with_import": 90,
+      "mutation_sites_mean": {
+        "operator": 3.47,
+        "boundary": 2.15,
+        "variable": 6.96
+      },
+      "tasks_with_site": {
+        "operator": 266,
+        "boundary": 194,
+        "variable": 328
+      }
+    }
+  },
+  "mbpp_sanitized_by_split": {
+    "prompt": 7,
+    "test": 257,
+    "validation": 43,
+    "train": 120
+  },
+  "mbpp_shadowed_builtins_top": [
+    [
+      "sum",
+      31
+    ],
+    [
+      "str",
+      22
+    ],
+    [
+      "list",
+      15
+    ],
+    [
+      "max",
+      8
+    ],
+    [
+      "dict",
+      7
+    ],
+    [
+      "input",
+      3
+    ],
+    [
+      "next",
+      2
+    ],
+    [
+      "min",
+      2
+    ],
+    [
+      "tuple",
+      1
+    ],
+    [
+      "set",
+      1
+    ]
+  ],
+  "humaneval": {
+    "tasks": 164,
+    "parse_failures": [],
+    "prompt_lines": {
+      "mean": 11.32,
+      "median": 10.5,
+      "p90": 17,
+      "max": 31
+    },
+    "solution_lines": {
+      "mean": 6.3,
+      "median": 5.5,
+      "p90": 13,
+      "max": 29
+    },
+    "asserts_per_task": {
+      "mean": 8.08,
+      "median": 7.0,
+      "p90": 13,
+      "max": 26
+    },
+    "top_imports": [
+      [
+        "typing",
+        21
+      ],
+      [
+        "math",
+        6
+      ],
+      [
+        "collections",
+        1
+      ],
+      [
+        "re",
+        1
+      ],
+      [
+        "hashlib",
+        1
+      ]
+    ],
+    "mutation_sites_mean": {
+      "operator": 4.11,
+      "boundary": 2.4,
+      "variable": 7.54
+    },
+    "tasks_with_site": {
+      "operator": 146,
+      "boundary": 127,
+      "variable": 142
+    }
+  }
+}

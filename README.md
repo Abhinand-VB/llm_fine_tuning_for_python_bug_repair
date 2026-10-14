@@ -6,6 +6,11 @@ This project compares a **prompt-only baseline** against **LoRA** and **QLoRA** 
 [Qwen2.5-Coder-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct). Each model gets
 up to three rounds to fix a buggy program. After every round, the failing unit-test output is fed back to it.
 
+## Project documents
+
+- [Data exploration](DATA_EXPLORATION.md): dataset sources, splits, statistics and quality findings
+- [Project plan](PROJECT_PLAN.md): phases, timeline, open decisions, risks and report outline
+
 ## Motivation
 
 Code models often produce logic or syntax errors that fail unit tests. Prompt-only repair methods leave the
