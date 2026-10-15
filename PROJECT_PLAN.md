@@ -1,6 +1,7 @@
 # Project Plan
 
-A rough plan for completing the project. Dates are tentative; adjust them to the course deadlines.
+A plan for completing the project. Milestones follow the CMPE 258 deadlines: check-ins on Oct 19, Nov 2
+and Nov 16, the report on Nov 27 and the presentation on Nov 30.
 
 ## Tentative abstract
 
@@ -21,17 +22,17 @@ A rough plan for completing the project. Dates are tentative; adjust them to the
 
 ## Phases
 
-Leads are suggested from the roles in the proposal; adjust as needed.
+Leads follow the roles in the proposal.
 
-| # | Phase | Lead | Support | Output |
-|---|---|---|---|---|
-| 0 | Data exploration ✅ | Abhinand, Neha | All | `DATA_EXPLORATION.md`, `exploration/`, `explore_mbpp.py` |
-| 1 | Execution sandbox | Neha | Abhinand | `src/sandbox.py` |
-| 2 | Bug-mutation pipeline | Abhinand | Sai Bhavana | `src/mutate.py`, `data/processed/*.jsonl` |
-| 3 | Prompt format and baseline | Neha | Abhinand | `src/prompts.py`, baseline results |
-| 4 | LoRA / QLoRA training on HPC | Sai Bhavana | Abhinand | `src/train.py`, `slurm/*.sbatch`, adapters |
-| 5 | Multi-round evaluation | Neha | Abhinand | `src/evaluate.py`, `results/*.json` |
-| 6 | Analysis and report | Neha | All | Charts, tables, final report |
+| # | Phase | Due | Lead | Support | Output |
+|---|---|---|---|---|---|
+| 0 | Data exploration ✅ | Check-in 1 (Oct 14) | Abhinand, Neha | All | `DATA_EXPLORATION.md`, `exploration/`, `explore_mbpp.py` |
+| 1 | Execution sandbox | Check-in 2 (Oct 19) | Neha | Abhinand | `src/sandbox.py` |
+| 2 | Bug-mutation pipeline | v1 by Check-in 2, final by Check-in 3 (Nov 2) | Abhinand | Sai Bhavana | `src/mutate.py`, `data/processed/*.jsonl` |
+| 3 | Prompt format and baseline | Check-in 3 (Nov 2) | Neha | Abhinand | `src/prompts.py`, baseline results |
+| 4 | LoRA / QLoRA training on HPC | HPC setup by Check-in 2, test runs by Check-in 3, full runs by Check-in 4 (Nov 16) | Sai Bhavana | Abhinand | `src/train.py`, `slurm/*.sbatch`, adapters |
+| 5 | Multi-round evaluation | Check-in 4 (Nov 16) | Neha | Abhinand | `src/evaluate.py`, `results/*.json` |
+| 6 | Analysis and report | Report (Nov 27), slides (Nov 30) | Neha | All | Charts, tables, final report, slides |
 
 ### Phase 1: Execution sandbox
 Needed by the mutation pipeline, the baseline and the evaluation, so build it first.
@@ -114,18 +115,21 @@ Metrics:
   and repair rate by bug type (bar chart).
 - A few qualitative examples: successful repairs, failures and over-corrections.
 
-## Timeline (tentative)
+## Timeline
 
-| Week | Dates | Milestone |
+| Due | Milestone | Owners |
 |---|---|---|
-| 1 | Oct 13 – Oct 19 | ✅ Data exploration, project plan, repo set up (**check-in**) |
-| 2 | Oct 20 – Oct 26 | Sandbox done; reference solutions validated; mutation pipeline v1 |
-| 3 | Oct 27 – Nov 2 | Mutation dataset finalized with yield stats; prompt format; baseline running |
-| 4 | Nov 3 – Nov 9 | HPC environment ready; LoRA and QLoRA smoke tests; first full training runs |
-| 5 | Nov 10 – Nov 16 | Training finished (plus extra seeds if time); evaluation harness complete |
-| 6 | Nov 17 – Nov 23 | Full evaluation on MBPP test and HumanEval; draft results tables and charts |
-| 7 | Nov 24 – Nov 30 | Analysis, qualitative examples, report draft |
-| 8 | Dec 1 – Dec 7 | Final report, slides and repo cleanup |
+| Check-in 1, Oct 14 | ✅ Data exploration, project plan, repo set up | Abhinand, Neha |
+| Check-in 2, Oct 19 | Sandbox done and reference solutions validated | Neha (lead), Abhinand |
+| Check-in 2, Oct 19 | Mutation pipeline v1 with first survival counts per bug type | Abhinand (lead), Sai Bhavana |
+| Check-in 2, Oct 19 | Prompt lengths measured with the Qwen tokenizer; HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
+| Check-in 3, Nov 2 | Final mutation dataset with survival statistics | Abhinand (lead), Sai Bhavana |
+| Check-in 3, Nov 2 | Prompt format and prompt-only baseline results | Neha (lead), Abhinand |
+| Check-in 3, Nov 2 | LoRA and QLoRA test runs on the HPC | Sai Bhavana (lead), Abhinand |
+| Check-in 4, Nov 16 | Full LoRA and QLoRA training runs (extra seeds if time) | Sai Bhavana (lead), Abhinand |
+| Check-in 4, Nov 16 | Three-round evaluation on MBPP test and HumanEval | Neha (lead), Abhinand |
+| Report, Nov 27 | Analysis, qualitative examples, charts and final paper | Neha (lead), all members |
+| Presentation, Nov 30 | Slides (6 max) and software demo | All members |
 
 ## Proposed repository layout
 
@@ -169,7 +173,7 @@ Metrics:
 
 | Risk | Mitigation |
 |---|---|
-| Low mutation yield (equivalent mutants, weak 3-test suites) | Measure yield early (week 2); allow 2 bugs per mutant; rebalance the split |
+| Low mutation yield (equivalent mutants, weak 3-test suites) | Measure yield early (by Check-in 2); allow 2 bugs per mutant; rebalance the split |
 | HPC queue waits or GPU limits | Smoke-test small jobs early; the 0.5B model also fits on a single consumer GPU or Colab as a fallback |
 | Evaluation too slow (3 rounds × hundreds of tasks × 3 systems) | Batch generation; subsample the MBPP test set if needed |
 | Synthetic bugs are simpler than real model mistakes | May add level 2–3 bugs; HumanEval option (a) tests repair of the model's own mistakes; mention as a limitation |
