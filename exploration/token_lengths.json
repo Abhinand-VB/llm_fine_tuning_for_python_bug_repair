@@ -1,0 +1,66 @@
+{
+  "train": {
+    "one_test_feedback": {
+      "n": 374,
+      "median": 187.0,
+      "p90": 315,
+      "max": 655,
+      "mean": 208.4,
+      "over_512": 7,
+      "over_1024": 0
+    },
+    "all_tests_feedback": {
+      "n": 374,
+      "median": 248.0,
+      "p90": 421,
+      "max": 764,
+      "mean": 274.1,
+      "over_512": 11,
+      "over_1024": 0
+    },
+    "longest_task_id": 950
+  },
+  "validation": {
+    "one_test_feedback": {
+      "n": 90,
+      "median": 186.5,
+      "p90": 349,
+      "max": 542,
+      "mean": 213.2,
+      "over_512": 1,
+      "over_1024": 0
+    },
+    "all_tests_feedback": {
+      "n": 90,
+      "median": 246.5,
+      "p90": 431,
+      "max": 782,
+      "mean": 278.4,
+      "over_512": 3,
+      "over_1024": 0
+    },
+    "longest_task_id": 522
+  },
+  "test": {
+    "one_test_feedback": {
+      "n": 500,
+      "median": 188.0,
+      "p90": 312,
+      "max": 2639,
+      "mean": 212.7,
+      "over_512": 7,
+      "over_1024": 1
+    },
+    "all_tests_feedback": {
+      "n": 500,
+      "median": 250.5,
+      "p90": 409,
+      "max": 4611,
+      "mean": 280.7,
+      "over_512": 16,
+      "over_1024": 1
+    },
+    "longest_task_id": 493
+  },
+  "template_overhead_tokens": 49
+}

@@ -251,7 +251,55 @@ Next we move from reading the code to running it, as part of building the mutati
    Record how many are kept for each bug type and which error types appear (`AssertionError`,
    `TypeError`, `IndexError`, timeout and so on). That error output is the execution feedback the
    model learns from.
-3. **Count tokens.** Measure prompt lengths with the Qwen2.5-Coder tokenizer to set
-   `max_seq_length`.
+3. **Count tokens.** Done, see Section 9: keep `max_seq_length = 1024`.
 4. **Confirm the split decision.** Choose the official split or one of the alternatives in Section 3,
    based on the mutation yield.
+
+## 9. Token lengths
+
+We measured training-example length with the actual model tokenizer (`Qwen/Qwen2.5-Coder-0.5B-Instruct`)
+to set `max_seq_length`. Script: [`exploration/token_lengths.py`](exploration/token_lengths.py), output in
+[`exploration/token_lengths.json`](exploration/token_lengths.json).
+
+```bash
+python exploration/token_lengths.py
+```
+
+**How each example is built.** One example per task in our training format (Problem / Buggy code /
+Test feedback / Corrected code), wrapped with `tok.apply_chat_template`: the problem, buggy code and
+feedback are the user message and the corrected code is the assistant reply. Bugs don't exist yet, so
+the reference solution is used for both the buggy and the corrected code (a mutation changes only a few
+tokens). The feedback is `AssertionError:` plus the task's first test line. Code is normalised as in
+Section 5 (`\n` line endings, tabs expanded). The chat template and Qwen's default system prompt add a
+fixed 49 tokens to every example.
+
+| Split | Tasks | Median | 90th pct | Longest | Over 512 | Over 1,024 |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 374 | 187 | 315 | 655 (task 950) | 7 (1.9%) | **0** |
+| Validation | 90 | 186.5 | 349 | 542 (task 522) | 1 (1.1%) | **0** |
+| Test | 500 | 188 | 312 | 2,639 (task 493) | 7 (1.4%) | 1 (0.2%) |
+
+![Token lengths](exploration/figures/token_lengths.png)
+
+**Stress check: all three tests in the feedback.** Real error output may be longer than one assert
+line. Putting all three test lines in the feedback raises the train median to 248 and the longest train
+example to 764 tokens (782 in validation). Still no train or validation example goes over 1,024.
+
+**Outlier: test task 493** (hexagon grid). Its expected output is a 1,900-character list of float
+tuples written inside the assert, so quoting the assert in the feedback makes the example 2,639 tokens.
+It is in the test split, so it does not affect training, but the evaluation harness should
+**truncate long feedback** (for example to the last 300–500 characters of the error) so prompts stay
+bounded.
+
+**Recommendation: keep `max_seq_length = 1024`.**
+
+- Every train and validation example fits, with room to spare: the longest is 655 tokens with one test
+  in the feedback and 764 with all three. Lowering the limit to 512 would truncate 7 train examples
+  (19 at 384, 75 at 256), and truncation would cut off the corrected code the model is supposed to learn.
+- Real tracebacks (`Traceback ...`, `File "<string>", line N`) and later correction rounds that include
+  earlier attempts will make prompts longer than this estimate, so the headroom is useful.
+- The higher limit costs very little: the trainer pads each batch to its longest example, not to
+  `max_seq_length`, and the typical example is under 200 tokens. If GPU memory gets tight on the HPC,
+  reduce batch size before reducing the limit, or try 768 (no train example is longer than 768 with one
+  test of feedback).
+- Re-run this script once the mutation pipeline produces real buggy code and error messages.
