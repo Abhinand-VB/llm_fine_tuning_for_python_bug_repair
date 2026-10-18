@@ -91,6 +91,10 @@ if __name__ == "__main__":
     # Testing a few tasks so it doesn't take too long
     train_tasks = [e for e in entries if 601 <= e.get('task_id', 0) <= 605]
 
+    # Test if will actually catch the break
+    # if train_tasks:
+    #     train_tasks[0]['code'] = "def broken_function(): return 999"
+
     if len(train_tasks) > 0:
         valid_train_tasks = filter_valid_reference_solutions(train_tasks)
     else:
