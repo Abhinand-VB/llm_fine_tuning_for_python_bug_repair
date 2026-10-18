@@ -31,7 +31,7 @@ def evaluate_code(code, test_list, setup_code="", timeout_seconds=3.0):
     
     process = multiprocessing.Process(
         target=run_task, 
-        args=(code, test_list, setup_code, q)
+        args=(code, test_list, setup_code, queue)
     )
     process.start()
     process.join(timeout=timeout_seconds)
