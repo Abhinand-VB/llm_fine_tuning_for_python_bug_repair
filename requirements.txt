@@ -1,0 +1,10 @@
+# Training environment (HPC). Install with: pip install -r requirements.txt
+torch
+transformers
+accelerate
+peft
+trl
+bitsandbytes
+datasets
+jinja2
+matplotlib
