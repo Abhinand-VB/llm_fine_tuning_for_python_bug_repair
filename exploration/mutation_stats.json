@@ -1,0 +1,142 @@
+{
+  "seed": 258,
+  "max_tries": 10,
+  "cap": 3,
+  "timeout_s": 3.0,
+  "splits": {
+    "train": {
+      "tasks": 374,
+      "reference_failed": [
+        927
+      ],
+      "tasks_with_example": 338,
+      "examples": 1876,
+      "by_type": {
+        "operator": {
+          "tasks_with_site": 265,
+          "candidates": 1262,
+          "run": 1088,
+          "failed_tests": 910,
+          "passed_tests": 178,
+          "failure_rate": 0.836,
+          "kept": 568,
+          "error_types": {
+            "AssertionError": 714,
+            "IndexError": 105,
+            "TypeError": 37,
+            "TimeoutError": 26,
+            "RecursionError": 18,
+            "ZeroDivisionError": 4,
+            "ValueError": 4,
+            "UnboundLocalError": 1,
+            "StopIteration": 1
+          }
+        },
+        "boundary": {
+          "tasks_with_site": 194,
+          "candidates": 1606,
+          "run": 1086,
+          "failed_tests": 857,
+          "passed_tests": 229,
+          "failure_rate": 0.789,
+          "kept": 487,
+          "error_types": {
+            "AssertionError": 599,
+            "IndexError": 179,
+            "TypeError": 25,
+            "RecursionError": 23,
+            "TimeoutError": 17,
+            "ZeroDivisionError": 5,
+            "ValueError": 5,
+            "KeyError": 4
+          }
+        },
+        "variable": {
+          "tasks_with_site": 315,
+          "candidates": 7432,
+          "run": 2033,
+          "failed_tests": 1898,
+          "passed_tests": 135,
+          "failure_rate": 0.934,
+          "kept": 821,
+          "error_types": {
+            "AssertionError": 1112,
+            "TypeError": 573,
+            "IndexError": 82,
+            "AttributeError": 56,
+            "TimeoutError": 31,
+            "UnboundLocalError": 16,
+            "RecursionError": 12,
+            "ZeroDivisionError": 8,
+            "KeyError": 4,
+            "ValueError": 3,
+            "StopIteration": 1
+          }
+        }
+      }
+    },
+    "validation": {
+      "tasks": 90,
+      "reference_failed": [],
+      "tasks_with_example": 84,
+      "examples": 482,
+      "by_type": {
+        "operator": {
+          "tasks_with_site": 62,
+          "candidates": 303,
+          "run": 277,
+          "failed_tests": 234,
+          "passed_tests": 43,
+          "failure_rate": 0.845,
+          "kept": 156,
+          "error_types": {
+            "AssertionError": 186,
+            "IndexError": 22,
+            "TypeError": 13,
+            "TimeoutError": 7,
+            "RecursionError": 4,
+            "KeyError": 1,
+            "ZeroDivisionError": 1
+          }
+        },
+        "boundary": {
+          "tasks_with_site": 49,
+          "candidates": 424,
+          "run": 278,
+          "failed_tests": 229,
+          "passed_tests": 49,
+          "failure_rate": 0.824,
+          "kept": 124,
+          "error_types": {
+            "AssertionError": 161,
+            "IndexError": 56,
+            "KeyError": 4,
+            "TimeoutError": 4,
+            "RecursionError": 3,
+            "ZeroDivisionError": 1
+          }
+        },
+        "variable": {
+          "tasks_with_site": 78,
+          "candidates": 2152,
+          "run": 531,
+          "failed_tests": 508,
+          "passed_tests": 23,
+          "failure_rate": 0.957,
+          "kept": 202,
+          "error_types": {
+            "AssertionError": 293,
+            "TypeError": 152,
+            "IndexError": 25,
+            "AttributeError": 20,
+            "TimeoutError": 9,
+            "RecursionError": 4,
+            "ZeroDivisionError": 3,
+            "KeyError": 1,
+            "UnboundLocalError": 1
+          }
+        }
+      }
+    }
+  }
+}
