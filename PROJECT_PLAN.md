@@ -120,9 +120,10 @@ Metrics:
 | Due | Milestone | Owners |
 |---|---|---|
 | Check-in 1, Oct 14 | ✅ Data exploration, project plan, repo set up | Abhinand, Neha |
+| Check-in 1, Oct 14 | ✅ Prompt lengths measured with the Qwen tokenizer | Sai Bhavana |
 | Check-in 2, Oct 19 | Sandbox done and reference solutions validated | Neha (lead), Abhinand |
 | Check-in 2, Oct 19 | Mutation pipeline v1 with first survival counts per bug type | Abhinand (lead), Sai Bhavana |
-| Check-in 2, Oct 19 | Prompt lengths measured with the Qwen tokenizer; HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
+| Check-in 2, Oct 19 | HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
 | Check-in 3, Nov 2 | Final mutation dataset with survival statistics | Abhinand (lead), Sai Bhavana |
 | Check-in 3, Nov 2 | Prompt format and prompt-only baseline results | Neha (lead), Abhinand |
 | Check-in 3, Nov 2 | LoRA and QLoRA test runs on the HPC | Sai Bhavana (lead), Abhinand |
