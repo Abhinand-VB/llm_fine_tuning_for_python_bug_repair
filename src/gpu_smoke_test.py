@@ -23,6 +23,7 @@ Output:
 
 import gc
 import json
+import os
 import platform
 import socket
 import time
@@ -34,7 +35,8 @@ import torch
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "results" / "gpu_smoke_test.json"
-MODEL_ID = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+# On the HPC there is no internet: point MODEL_PATH at the folder copied from your Mac.
+MODEL_ID = os.environ.get("MODEL_PATH", "Qwen/Qwen2.5-Coder-0.5B-Instruct")
 SEQ_LEN = 1024
 LORA_TARGETS = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 GB = 1024 ** 3

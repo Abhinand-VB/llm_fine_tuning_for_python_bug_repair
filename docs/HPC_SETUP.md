@@ -49,17 +49,39 @@ keep large files (checkpoints) small and delete old ones.
 
 The login node is for setup only. Never train on it; GPU work goes through `sbatch`.
 
-## 3. Environment (one time, login node)
+## 3. Environment (offline setup)
+
+Only coe-hpc1 can reach the internet. The GPU login node (g17) and all compute nodes cannot (`curl`
+times out), and jobs must never run on coe-hpc1. So we download on a Mac, copy the files over with
+`rsync`, and install from local files inside a scheduled job. The `/home` drive is shared by all
+nodes, so files copied once are visible everywhere.
+
+**On the Mac** (campus network or VPN), in the repo folder with its `.venv` active:
 
 ```bash
-git clone https://github.com/Abhinand-VB/llm_fine_tuning_for_python_bug_repair.git
-cd llm_fine_tuning_for_python_bug_repair
-module load python3/3.12.12
-bash slurm/setup_env.sh
+mkdir -p ~/hpc_files/wheels
+pip download -r requirements.txt -d ~/hpc_files/wheels --only-binary=:all: \
+  --platform manylinux2014_x86_64 --platform manylinux_2_17_x86_64 --platform manylinux_2_28_x86_64 \
+  --python-version 3.12 --implementation cp
+python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-Coder-0.5B-Instruct', local_dir='$HOME/hpc_files/Qwen2.5-Coder-0.5B-Instruct')"
+ssh SJSU_ID@coe-hpc1.sjsu.edu "mkdir -p ~/wheels ~/models"
+rsync -av --progress ~/hpc_files/wheels/ SJSU_ID@coe-hpc1.sjsu.edu:~/wheels/
+rsync -av --progress ~/hpc_files/Qwen2.5-Coder-0.5B-Instruct SJSU_ID@coe-hpc1.sjsu.edu:~/models/
 ```
 
-This creates `.venv`, installs [`requirements.txt`](../requirements.txt) (torch, transformers, peft, trl,
-bitsandbytes, accelerate) and downloads the model to `~/.cache/huggingface`, so jobs can run offline.
+(about 5 GB; the wheels are Linux x86_64 builds, so they differ from what a Mac would install).
+
+**On the HPC**, get the repo (`git clone` on coe-hpc1, which is the only machine with internet, or
+`rsync` the folder from the Mac), then on g17 install as a scheduled job:
+
+```bash
+ssh coe-hpc3
+cd llm_fine_tuning_for_python_bug_repair
+srun -p defq -n 1 -c 4 --mem=16G --time=00:30:00 bash slurm/setup_offline.sh
+```
+
+`slurm/setup_env.sh` is the online version, for a machine with internet access (for example a laptop
+or Colab).
 
 ## 4. GPU smoke test
 

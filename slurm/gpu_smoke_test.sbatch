@@ -33,9 +33,9 @@ module load python3/3.12.12
 
 source .venv/bin/activate
 
-# The model was downloaded on the login node by slurm/setup_env.sh.
-# Offline mode works even if compute nodes have no internet access.
-export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
+# Compute nodes have no internet: the model folder was copied from a Mac
+# (see docs/HPC_SETUP.md, offline setup).
+export MODEL_PATH="${MODEL_PATH:-$HOME/models/Qwen2.5-Coder-0.5B-Instruct}"
 export HF_HUB_OFFLINE=1
 export TOKENIZERS_PARALLELISM=false
 
