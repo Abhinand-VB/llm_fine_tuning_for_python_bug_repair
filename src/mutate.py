@@ -200,10 +200,50 @@ def find_sites(tree):
     return sites
 
 
-def apply_site(tree, walk_index, action):
-    """Apply one mutation to a copy of `tree`. Returns (mutated tree, description)."""
+def replaced_nodes(node, action):
+    """Ids of the nodes that `action` throws away when it shifts a subexpression of `node`."""
+    kind = action[0]
+    if kind == "range":
+        expr = node.args[action[1]]
+    elif kind == "slice":
+        expr = getattr(node, action[1])
+    elif kind == "index":
+        expr = node.slice
+    else:
+        return set()
+    return {id(n) for n in ast.walk(expr)}
+
+
+def compatible(nodes, sites):
+    """Whether several sites can be mutated together: no two on the same node, and none
+    inside a subexpression that another one replaces (that mutation would be lost)."""
+    targets = [walk_index for walk_index, _ in sites]
+    if len(set(targets)) < len(targets):
+        return False
+    for walk_index, action in sites:
+        replaced = replaced_nodes(nodes[walk_index], action)
+        if any(id(nodes[other]) in replaced for other in targets if other != walk_index):
+            return False
+    return True
+
+
+def apply_sites(tree, sites):
+    """Apply one or more mutations to a copy of `tree`. Returns (mutated tree, description).
+
+    `sites` is a list of (walk_index, action) and must be `compatible`. All target nodes are
+    looked up before any is changed, because a mutation can add nodes and shift the walk order.
+    """
     tree = copy.deepcopy(tree)
-    node = list(ast.walk(tree))[walk_index]
+    nodes = list(ast.walk(tree))
+    targets = sorted(((nodes[w], action) for w, action in sites),
+                     key=lambda t: (getattr(t[0], "lineno", 0), getattr(t[0], "col_offset", 0)))
+    descs = [mutate_node(node, action) for node, action in targets]
+    ast.fix_missing_locations(tree)
+    return tree, "; ".join(descs)
+
+
+def mutate_node(node, action):
+    """Apply one mutation to `node` in place. Returns its description."""
     kind = action[0]
     line = getattr(node, "lineno", None)
 
@@ -244,9 +284,7 @@ def apply_site(tree, walk_index, action):
         node.id = action[1]
     else:
         raise ValueError(kind)
-
-    ast.fix_missing_locations(tree)
-    return tree, f"line {line}: {desc}" if line else desc
+    return f"line {line}: {desc}" if line else desc
 
 
 # ---------------------------------------------------------------- execution feedback
@@ -335,7 +373,7 @@ def candidates_for_task(fixed_code, rng):
     by_type = defaultdict(list)
     seen = {fixed_code}
     for bug_type, walk_index, action in find_sites(tree):
-        mutated, desc = apply_site(tree, walk_index, action)
+        mutated, desc = apply_sites(tree, [(walk_index, action)])
         try:
             buggy = ast.unparse(mutated)
             compile(buggy, "<mutant>", "exec")
