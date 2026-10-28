@@ -14,17 +14,21 @@ For every task in the chosen MBPP splits:
   6. Level 2: combine 2-3 of the single mutations that failed a test on their own into one
      mutant, run up to MAX_TRIES of them per task and keep at most CAP that fail.
 
-Only the train (601-974) and validation (511-600) splits are mutated by default. Test
-mutants for the held-out evaluation can be generated with `--splits test`; they are written to
-their own file and must never be used for training.
+All three MBPP splits are mutated by default: train (601-974), validation (511-600) and test
+(11-510; tasks 1-10 are kept for few-shot prompts). The test mutants are the held-out
+evaluation set. They are written to their own file, keep only TEST_CAP mutant per task and bug
+type (and per task for level 2) to bound the evaluation cost, and must never be used for
+training.
 
 Usage (Linux, macOS or WSL; the sandbox uses Unix-only modules):
     python src/mutate.py
+    python src/mutate.py --splits test                  # regenerate one split only
     python src/mutate.py --splits train --limit 20     # quick smoke test
 
 Outputs:
     data/processed/{split}.jsonl        one example per line (git-ignored)
-    exploration/mutation_stats.json     yield statistics per split and bug type
+    exploration/mutation_stats.json     yield statistics per split and bug type; a run over
+                                        some splits keeps the statistics of the others
 """
 
 import argparse
@@ -61,6 +65,7 @@ BUG_TYPES = ("operator", "boundary", "variable")
 SEED = 258
 MAX_TRIES = 10      # candidates run per task and bug type
 CAP = 3             # failing mutants kept per task and bug type (and per task for level 2)
+TEST_CAP = 1        # the same for the held-out test split
 LEVEL2_SIZES = (2, 3)       # mutations combined in one level 2 mutant
 LEVEL2_ATTEMPTS = 100       # random combinations tried per task to find MAX_TRIES valid ones
 TIMEOUT = 3.0       # seconds per sandbox run
@@ -451,7 +456,7 @@ def make_example(task, split, buggy, feedback, fixed, bug_type, desc, error_type
     }
 
 
-def process_split(name, tasks, pool):
+def process_split(name, tasks, pool, cap):
     rng = random.Random(f"{SEED}-{name}")
     rng2 = random.Random(f"{SEED}-{name}-level2")
     stats = {
@@ -512,14 +517,14 @@ def process_split(name, tasks, pool):
         failing[task["task_id"]][bug_type].append(site)
         feedback, error_type = format_feedback(buggy, task["test_list"], error or "")
         stats["error_types"][bug_type][error_type] += 1
-        if kept[task["task_id"], bug_type] >= CAP:
+        if kept[task["task_id"], bug_type] >= cap:
             continue
         kept[task["task_id"], bug_type] += 1
         counts["kept"] += 1
         examples.append(make_example(task, name, buggy, feedback, fixed, bug_type, desc, error_type,
                                      level=1, size=1))
 
-    # 6. Level 2: combine 2-3 failing single mutations, keep at most CAP failing ones per task
+    # 6. Level 2: combine 2-3 failing single mutations, keep at most `cap` failing ones per task
     jobs = []
     for task, fixed in valid:
         items = level2_candidates(fixed, failing[task["task_id"]], rng2, seen[task["task_id"]])
@@ -538,7 +543,7 @@ def process_split(name, tasks, pool):
         counts["failed_tests"] += 1
         feedback, error_type = format_feedback(buggy, task["test_list"], error or "")
         stats["level2_error_types"][error_type] += 1
-        if kept[task["task_id"], "level2"] >= CAP:
+        if kept[task["task_id"], "level2"] >= cap:
             continue
         kept[task["task_id"], "level2"] += 1
         counts["kept"] += 1
@@ -586,19 +591,24 @@ def summarize(stats):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--splits", nargs="+", default=["train", "validation"], choices=list(MBPP_SPLITS))
+    parser.add_argument("--splits", nargs="+", default=["train", "validation", "test"], choices=list(MBPP_SPLITS))
     parser.add_argument("--limit", type=int, help="only use the first N tasks of each split (smoke test)")
     parser.add_argument("--workers", type=int, default=multiprocessing.cpu_count())
     args = parser.parse_args()
 
     entries = load_mbpp()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    all_stats = {"seed": SEED, "max_tries": MAX_TRIES, "cap": CAP, "timeout_s": TIMEOUT, "splits": {}}
+    all_stats = {"seed": SEED, "max_tries": MAX_TRIES, "cap": CAP, "test_cap": TEST_CAP,
+                 "level2_sizes": list(LEVEL2_SIZES), "timeout_s": TIMEOUT, "splits": {}}
+    if args.limit is None and STATS_PATH.exists():
+        previous = json.loads(STATS_PATH.read_text(encoding="utf-8"))["splits"]
+        all_stats["splits"] = {name: previous[name] for name in ("train", "validation", "test")
+                               if name in previous}
 
     with ThreadPoolExecutor(args.workers) as pool:
         for name in args.splits:
             tasks = [e for e in entries if e["task_id"] in MBPP_SPLITS[name]][:args.limit]
-            examples, stats = process_split(name, tasks, pool)
+            examples, stats = process_split(name, tasks, pool, TEST_CAP if name == "test" else CAP)
             path = OUT_DIR / f"{name}.jsonl"
             with open(path, "w", encoding="utf-8") as f:
                 for ex in examples:
