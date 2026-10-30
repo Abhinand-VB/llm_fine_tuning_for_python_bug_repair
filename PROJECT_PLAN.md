@@ -51,8 +51,8 @@ Needed by the mutation pipeline, the baseline and the evaluation, so build it fi
 
   | Level | How it is created | Status |
   |---|---|---|
-  | 1. Single mutation | One operator, boundary or variable change per mutant | Planned |
-  | 2. Multiple mutations | 2–3 changes applied to the same solution | May implement |
+  | 1. Single mutation | One operator, boundary or variable change per mutant | Done |
+  | 2. Multiple mutations | 2–3 changes applied to the same solution | Done |
   | 3. Real model mistakes | Base Qwen model solves MBPP train tasks; failing answers are paired with the reference solution | May implement if time allows |
 
 - Skip variable swaps that involve shadowed built-ins (`sum`, `max`, `str`, and so on).
@@ -122,9 +122,9 @@ Metrics:
 | Check-in 1, Oct 14 | ✅ Data exploration, project plan, repo set up | Abhinand, Neha |
 | Check-in 1, Oct 14 | ✅ Prompt lengths measured with the Qwen tokenizer | Sai Bhavana |
 | Check-in 2, Oct 19 | Sandbox done and reference solutions validated | Neha (lead), Abhinand |
-| Check-in 2, Oct 19 | Mutation pipeline v1 with first survival counts per bug type | Abhinand (lead), Sai Bhavana |
+| Check-in 2, Oct 19 | ✅ Mutation pipeline v1 with first survival counts per bug type | Abhinand (lead), Sai Bhavana |
 | Check-in 2, Oct 19 | HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
-| Check-in 3, Nov 2 | Final mutation dataset with survival statistics | Abhinand (lead), Sai Bhavana |
+| Check-in 3, Nov 2 | ✅ Final mutation dataset with survival statistics | Abhinand (lead), Sai Bhavana |
 | Check-in 3, Nov 2 | Prompt format and prompt-only baseline results | Neha (lead), Abhinand |
 | Check-in 3, Nov 2 | LoRA and QLoRA test runs on the HPC | Sai Bhavana (lead), Abhinand |
 | Check-in 4, Nov 16 | Full LoRA and QLoRA training runs (extra seeds if time) | Sai Bhavana (lead), Abhinand |
@@ -166,8 +166,8 @@ Metrics:
    results are optimistic. For HumanEval, we could use the docstring examples or a subset of asserts as
    visible feedback and score on the full test. MBPP has only three tests, so we'll probably use all
    three and note it as a limitation.
-3. **Split.** Keep the official MBPP split, or rebalance it if mutation yield is low (see
-   `DATA_EXPLORATION.md` §3).
+3. **Split.** Decided: keep the official MBPP split. The mutation yield is high enough
+   (`DATA_EXPLORATION.md` §10).
 4. **Full or sanitized MBPP.** Full gives more data; sanitized gives cleaner problem statements.
 
 ## Risks
