@@ -1,4 +1,4 @@
-"""Bug-mutation pipeline (v1): build (buggy code, feedback) -> fixed code examples from MBPP.
+"""Bug-mutation pipeline: build (buggy code, feedback) -> fixed code examples from MBPP.
 
 For every task in the chosen MBPP splits:
   1. Normalize the reference solution (line endings, tabs) and re-serialize it with
@@ -9,19 +9,26 @@ For every task in the chosen MBPP splits:
   4. Run up to MAX_TRIES sampled candidates per task and bug type in the sandbox. A mutant is
      usable only if it fails at least one test; mutants that pass all three tests are
      equivalent or undetected and are discarded.
-  5. Keep at most CAP failing mutants per task and bug type, to balance the bug types.
+  5. Keep at most CAP failing mutants per task and bug type, to balance the bug types. These
+     are the level 1 bugs.
+  6. Level 2: combine 2-3 of the single mutations that failed a test on their own into one
+     mutant, run up to MAX_TRIES of them per task and keep at most CAP that fail.
 
-Only the train (601-974) and validation (511-600) splits are mutated by default. Test
-mutants for the held-out evaluation can be generated with `--splits test`; they are written to
-their own file and must never be used for training.
+All three MBPP splits are mutated by default: train (601-974), validation (511-600) and test
+(11-510; tasks 1-10 are kept for few-shot prompts). The test mutants are the held-out
+evaluation set. They are written to their own file, keep only TEST_CAP mutant per task and bug
+type (and per task for level 2) to bound the evaluation cost, and must never be used for
+training.
 
 Usage (Linux, macOS or WSL; the sandbox uses Unix-only modules):
     python src/mutate.py
+    python src/mutate.py --splits test                  # regenerate one split only
     python src/mutate.py --splits train --limit 20     # quick smoke test
 
 Outputs:
     data/processed/{split}.jsonl        one example per line (git-ignored)
-    exploration/mutation_stats.json     yield statistics per split and bug type
+    exploration/mutation_stats.json     yield statistics per split and bug type; a run over
+                                        some splits keeps the statistics of the others
 """
 
 import argparse
@@ -57,7 +64,10 @@ BUG_TYPES = ("operator", "boundary", "variable")
 
 SEED = 258
 MAX_TRIES = 10      # candidates run per task and bug type
-CAP = 3             # failing mutants kept per task and bug type
+CAP = 3             # failing mutants kept per task and bug type (and per task for level 2)
+TEST_CAP = 1        # the same for the held-out test split
+LEVEL2_SIZES = (2, 3)       # mutations combined in one level 2 mutant
+LEVEL2_ATTEMPTS = 100       # random combinations tried per task to find MAX_TRIES valid ones
 TIMEOUT = 3.0       # seconds per sandbox run
 MAX_FEEDBACK_CHARS = 500
 MAX_FRAMES = 3      # innermost traceback frames kept in the feedback
@@ -200,10 +210,50 @@ def find_sites(tree):
     return sites
 
 
-def apply_site(tree, walk_index, action):
-    """Apply one mutation to a copy of `tree`. Returns (mutated tree, description)."""
+def replaced_nodes(node, action):
+    """Ids of the nodes that `action` throws away when it shifts a subexpression of `node`."""
+    kind = action[0]
+    if kind == "range":
+        expr = node.args[action[1]]
+    elif kind == "slice":
+        expr = getattr(node, action[1])
+    elif kind == "index":
+        expr = node.slice
+    else:
+        return set()
+    return {id(n) for n in ast.walk(expr)}
+
+
+def compatible(nodes, sites):
+    """Whether several sites can be mutated together: no two on the same node, and none
+    inside a subexpression that another one replaces (that mutation would be lost)."""
+    targets = [walk_index for walk_index, _ in sites]
+    if len(set(targets)) < len(targets):
+        return False
+    for walk_index, action in sites:
+        replaced = replaced_nodes(nodes[walk_index], action)
+        if any(id(nodes[other]) in replaced for other in targets if other != walk_index):
+            return False
+    return True
+
+
+def apply_sites(tree, sites):
+    """Apply one or more mutations to a copy of `tree`. Returns (mutated tree, description).
+
+    `sites` is a list of (walk_index, action) and must be `compatible`. All target nodes are
+    looked up before any is changed, because a mutation can add nodes and shift the walk order.
+    """
     tree = copy.deepcopy(tree)
-    node = list(ast.walk(tree))[walk_index]
+    nodes = list(ast.walk(tree))
+    targets = sorted(((nodes[w], action) for w, action in sites),
+                     key=lambda t: (getattr(t[0], "lineno", 0), getattr(t[0], "col_offset", 0)))
+    descs = [mutate_node(node, action) for node, action in targets]
+    ast.fix_missing_locations(tree)
+    return tree, "; ".join(descs)
+
+
+def mutate_node(node, action):
+    """Apply one mutation to `node` in place. Returns its description."""
     kind = action[0]
     line = getattr(node, "lineno", None)
 
@@ -244,9 +294,7 @@ def apply_site(tree, walk_index, action):
         node.id = action[1]
     else:
         raise ValueError(kind)
-
-    ast.fix_missing_locations(tree)
-    return tree, f"line {line}: {desc}" if line else desc
+    return f"line {line}: {desc}" if line else desc
 
 
 # ---------------------------------------------------------------- execution feedback
@@ -329,35 +377,98 @@ def truncate(text, limit):
 
 # ---------------------------------------------------------------- pipeline
 
+def unparse_valid(tree):
+    """Source of a mutated tree, or None if it does not compile."""
+    try:
+        code = ast.unparse(tree)
+        compile(code, "<mutant>", "exec")
+    except (SyntaxError, ValueError):
+        return None
+    return code
+
+
 def candidates_for_task(fixed_code, rng):
-    """All unique single mutants of `fixed_code`, grouped by bug type and shuffled."""
+    """All unique single mutants of `fixed_code`, grouped by bug type and shuffled.
+
+    Returns (by_type, seen): by_type maps a bug type to (buggy, desc, site) items, and seen is
+    the set of every program produced so far, used to deduplicate level 2 mutants.
+    """
     tree = ast.parse(fixed_code)
     by_type = defaultdict(list)
     seen = {fixed_code}
     for bug_type, walk_index, action in find_sites(tree):
-        mutated, desc = apply_site(tree, walk_index, action)
-        try:
-            buggy = ast.unparse(mutated)
-            compile(buggy, "<mutant>", "exec")
-        except (SyntaxError, ValueError):
-            continue
-        if buggy in seen:
+        mutated, desc = apply_sites(tree, [(walk_index, action)])
+        buggy = unparse_valid(mutated)
+        if buggy is None or buggy in seen:
             continue
         seen.add(buggy)
-        by_type[bug_type].append((buggy, desc))
+        by_type[bug_type].append((buggy, desc, (walk_index, action)))
     for items in by_type.values():
         rng.shuffle(items)
-    return by_type
+    return by_type, seen
 
 
-def process_split(name, tasks, pool):
+def level2_candidates(fixed_code, failing, rng, seen):
+    """Up to MAX_TRIES unique mutants that combine 2-3 single mutations of `fixed_code`.
+
+    `failing` maps each bug type to the sites whose single mutant failed a test, so every bug
+    in a combination is one the tests detect on its own and the model has to fix all of them.
+    Each mutation first picks a bug type uniformly and then a site of that type, so the many
+    variable sites do not crowd out the other types. Returns (buggy, desc, bug_type, size) items.
+    """
+    types = [t for t in BUG_TYPES if failing.get(t)]
+    if sum(len(failing[t]) for t in types) < min(LEVEL2_SIZES):
+        return []
+    tree = ast.parse(fixed_code)
+    nodes = list(ast.walk(tree))
+    out = []
+    for _ in range(LEVEL2_ATTEMPTS):
+        if len(out) >= MAX_TRIES:
+            break
+        picks = [(t, rng.choice(failing[t])) for t in rng.choices(types, k=rng.choice(LEVEL2_SIZES))]
+        sites = [site for _, site in picks]
+        if not compatible(nodes, sites):
+            continue
+        mutated, desc = apply_sites(tree, sites)
+        buggy = unparse_valid(mutated)
+        if buggy is None or buggy in seen:
+            continue
+        seen.add(buggy)
+        out.append((buggy, desc, "+".join(sorted({t for t, _ in picks})), len(sites)))
+    return out
+
+
+def make_example(task, split, buggy, feedback, fixed, bug_type, desc, error_type, level, size):
+    return {
+        "task_id": task["task_id"],
+        "split": split,
+        "problem": task["text"],
+        "tests": task["test_list"],
+        "buggy_code": buggy,
+        "feedback": feedback,
+        "fixed_code": fixed,
+        "bug_type": bug_type,
+        "mutation": desc,
+        "num_mutations": size,
+        "error_type": error_type,
+        "level": level,
+        "round": 1,
+    }
+
+
+def process_split(name, tasks, pool, cap):
     rng = random.Random(f"{SEED}-{name}")
+    rng2 = random.Random(f"{SEED}-{name}-level2")
     stats = {
         "tasks": len(tasks),
         "reference_failed": [],
         "tasks_with_example": 0,
         "by_type": {t: Counter() for t in BUG_TYPES},
         "error_types": {t: Counter() for t in BUG_TYPES},
+        "level2": Counter(),
+        "level2_error_types": Counter(),
+        "level2_sizes": Counter(),
+        "level2_types": Counter(),
     }
 
     # 1-2. Normalize and validate the references
@@ -380,54 +491,73 @@ def process_split(name, tasks, pool):
 
     # 3. Enumerate candidates, 4. pick up to MAX_TRIES per task and bug type
     jobs = []
+    seen = {}
     for task, fixed in valid:
-        by_type = candidates_for_task(fixed, rng)
+        by_type, seen[task["task_id"]] = candidates_for_task(fixed, rng)
         for bug_type in BUG_TYPES:
             items = by_type.get(bug_type, [])
             stats["by_type"][bug_type]["candidates"] += len(items)
             stats["by_type"][bug_type]["tasks_with_site"] += bool(items)
-            for buggy, desc in items[:MAX_TRIES]:
-                jobs.append((task, fixed, bug_type, buggy, desc))
-    print(f"[{name}] running {len(jobs)} mutants in the sandbox")
+            for buggy, desc, site in items[:MAX_TRIES]:
+                jobs.append((task, fixed, bug_type, buggy, desc, site))
+    print(f"[{name}] running {len(jobs)} level 1 mutants in the sandbox")
     results = pool.map(lambda j: run(j[3], j[0]["test_list"], j[0]["test_setup_code"]), jobs)
 
     # 5. Keep failing mutants, capped per task and bug type
     examples = []
     kept = Counter()
-    for (task, fixed, bug_type, buggy, desc), (passed, error) in zip(jobs, results):
+    failing = defaultdict(lambda: defaultdict(list))    # task_id -> bug type -> failing sites
+    for (task, fixed, bug_type, buggy, desc, site), (passed, error) in zip(jobs, results):
         counts = stats["by_type"][bug_type]
         counts["run"] += 1
         if passed:
             counts["passed_tests"] += 1
             continue
         counts["failed_tests"] += 1
+        failing[task["task_id"]][bug_type].append(site)
         feedback, error_type = format_feedback(buggy, task["test_list"], error or "")
         stats["error_types"][bug_type][error_type] += 1
-        if kept[task["task_id"], bug_type] >= CAP:
+        if kept[task["task_id"], bug_type] >= cap:
             continue
         kept[task["task_id"], bug_type] += 1
         counts["kept"] += 1
-        examples.append({
-            "task_id": task["task_id"],
-            "split": name,
-            "problem": task["text"],
-            "tests": task["test_list"],
-            "buggy_code": buggy,
-            "feedback": feedback,
-            "fixed_code": fixed,
-            "bug_type": bug_type,
-            "mutation": desc,
-            "error_type": error_type,
-            "level": 1,
-            "round": 1,
-        })
+        examples.append(make_example(task, name, buggy, feedback, fixed, bug_type, desc, error_type,
+                                     level=1, size=1))
+
+    # 6. Level 2: combine 2-3 failing single mutations, keep at most `cap` failing ones per task
+    jobs = []
+    for task, fixed in valid:
+        items = level2_candidates(fixed, failing[task["task_id"]], rng2, seen[task["task_id"]])
+        stats["level2"]["tasks_with_candidate"] += bool(items)
+        stats["level2"]["candidates"] += len(items)
+        jobs += [(task, fixed, *item) for item in items]
+    print(f"[{name}] running {len(jobs)} level 2 mutants in the sandbox")
+    results = pool.map(lambda j: run(j[2], j[0]["test_list"], j[0]["test_setup_code"]), jobs)
+
+    counts = stats["level2"]
+    for (task, fixed, buggy, desc, bug_type, size), (passed, error) in zip(jobs, results):
+        counts["run"] += 1
+        if passed:
+            counts["passed_tests"] += 1
+            continue
+        counts["failed_tests"] += 1
+        feedback, error_type = format_feedback(buggy, task["test_list"], error or "")
+        stats["level2_error_types"][error_type] += 1
+        if kept[task["task_id"], "level2"] >= cap:
+            continue
+        kept[task["task_id"], "level2"] += 1
+        counts["kept"] += 1
+        stats["level2_sizes"][size] += 1
+        stats["level2_types"][bug_type] += 1
+        examples.append(make_example(task, name, buggy, feedback, fixed, bug_type, desc, error_type,
+                                     level=2, size=size))
     stats["tasks_with_example"] = len({e["task_id"] for e in examples})
     stats["examples"] = len(examples)
     return examples, stats
 
 
 def summarize(stats):
-    out = {k: v for k, v in stats.items() if k not in ("by_type", "error_types")}
+    out = {k: v for k, v in stats.items() if k not in ("by_type", "error_types") and not k.startswith("level2")}
     out["reference_failed"] = sorted(stats["reference_failed"])
     out["by_type"] = {}
     for bug_type in BUG_TYPES:
@@ -443,24 +573,42 @@ def summarize(stats):
             "kept": c["kept"],
             "error_types": dict(stats["error_types"][bug_type].most_common()),
         }
+    c = stats["level2"]
+    out["level2"] = {
+        "tasks_with_candidate": c["tasks_with_candidate"],
+        "candidates": c["candidates"],
+        "run": c["run"],
+        "failed_tests": c["failed_tests"],
+        "passed_tests": c["passed_tests"],
+        "failure_rate": round(c["failed_tests"] / (c["run"] or 1), 3),
+        "kept": c["kept"],
+        "kept_by_num_mutations": {str(k): v for k, v in sorted(stats["level2_sizes"].items())},
+        "kept_by_bug_types": dict(stats["level2_types"].most_common()),
+        "error_types": dict(stats["level2_error_types"].most_common()),
+    }
     return out
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--splits", nargs="+", default=["train", "validation"], choices=list(MBPP_SPLITS))
+    parser.add_argument("--splits", nargs="+", default=["train", "validation", "test"], choices=list(MBPP_SPLITS))
     parser.add_argument("--limit", type=int, help="only use the first N tasks of each split (smoke test)")
     parser.add_argument("--workers", type=int, default=multiprocessing.cpu_count())
     args = parser.parse_args()
 
     entries = load_mbpp()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    all_stats = {"seed": SEED, "max_tries": MAX_TRIES, "cap": CAP, "timeout_s": TIMEOUT, "splits": {}}
+    all_stats = {"seed": SEED, "max_tries": MAX_TRIES, "cap": CAP, "test_cap": TEST_CAP,
+                 "level2_sizes": list(LEVEL2_SIZES), "timeout_s": TIMEOUT, "splits": {}}
+    if args.limit is None and STATS_PATH.exists():
+        previous = json.loads(STATS_PATH.read_text(encoding="utf-8"))["splits"]
+        all_stats["splits"] = {name: previous[name] for name in ("train", "validation", "test")
+                               if name in previous}
 
     with ThreadPoolExecutor(args.workers) as pool:
         for name in args.splits:
             tasks = [e for e in entries if e["task_id"] in MBPP_SPLITS[name]][:args.limit]
-            examples, stats = process_split(name, tasks, pool)
+            examples, stats = process_split(name, tasks, pool, TEST_CAP if name == "test" else CAP)
             path = OUT_DIR / f"{name}.jsonl"
             with open(path, "w", encoding="utf-8") as f:
                 for ex in examples:

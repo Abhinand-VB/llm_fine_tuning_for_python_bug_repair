@@ -2,6 +2,11 @@
   "seed": 258,
   "max_tries": 10,
   "cap": 3,
+  "test_cap": 1,
+  "level2_sizes": [
+    2,
+    3
+  ],
   "timeout_s": 3.0,
   "splits": {
     "train": {
@@ -10,7 +15,7 @@
         927
       ],
       "tasks_with_example": 338,
-      "examples": 1876,
+      "examples": 2741,
       "by_type": {
         "operator": {
           "tasks_with_site": 265,
@@ -73,13 +78,49 @@
             "StopIteration": 1
           }
         }
+      },
+      "level2": {
+        "tasks_with_candidate": 305,
+        "candidates": 2691,
+        "run": 2691,
+        "failed_tests": 2672,
+        "passed_tests": 19,
+        "failure_rate": 0.993,
+        "kept": 865,
+        "kept_by_num_mutations": {
+          "2": 565,
+          "3": 300
+        },
+        "kept_by_bug_types": {
+          "operator+variable": 277,
+          "variable": 194,
+          "boundary+variable": 139,
+          "boundary+operator": 109,
+          "boundary+operator+variable": 69,
+          "operator": 48,
+          "boundary": 29
+        },
+        "error_types": {
+          "AssertionError": 1465,
+          "TypeError": 698,
+          "IndexError": 289,
+          "AttributeError": 83,
+          "TimeoutError": 47,
+          "RecursionError": 38,
+          "UnboundLocalError": 16,
+          "ValueError": 14,
+          "ZeroDivisionError": 10,
+          "KeyError": 9,
+          "StopIteration": 2,
+          "OverflowError": 1
+        }
       }
     },
     "validation": {
       "tasks": 90,
       "reference_failed": [],
       "tasks_with_example": 84,
-      "examples": 482,
+      "examples": 693,
       "by_type": {
         "operator": {
           "tasks_with_site": 62,
@@ -135,6 +176,147 @@
             "KeyError": 1,
             "UnboundLocalError": 1
           }
+        }
+      },
+      "level2": {
+        "tasks_with_candidate": 73,
+        "candidates": 660,
+        "run": 660,
+        "failed_tests": 653,
+        "passed_tests": 7,
+        "failure_rate": 0.989,
+        "kept": 211,
+        "kept_by_num_mutations": {
+          "2": 139,
+          "3": 72
+        },
+        "kept_by_bug_types": {
+          "operator+variable": 57,
+          "variable": 49,
+          "boundary+variable": 39,
+          "boundary+operator": 31,
+          "operator": 15,
+          "boundary+operator+variable": 15,
+          "boundary": 5
+        },
+        "error_types": {
+          "AssertionError": 345,
+          "TypeError": 164,
+          "IndexError": 69,
+          "AttributeError": 30,
+          "TimeoutError": 20,
+          "RecursionError": 12,
+          "ZeroDivisionError": 7,
+          "KeyError": 6
+        }
+      }
+    },
+    "test": {
+      "tasks": 500,
+      "reference_failed": [
+        123,
+        367
+      ],
+      "tasks_with_example": 479,
+      "examples": 1483,
+      "by_type": {
+        "operator": {
+          "tasks_with_site": 383,
+          "candidates": 1815,
+          "run": 1638,
+          "failed_tests": 1409,
+          "passed_tests": 229,
+          "failure_rate": 0.86,
+          "kept": 369,
+          "error_types": {
+            "AssertionError": 1112,
+            "IndexError": 140,
+            "TypeError": 60,
+            "TimeoutError": 45,
+            "RecursionError": 28,
+            "ValueError": 10,
+            "KeyError": 5,
+            "OverflowError": 3,
+            "ZeroDivisionError": 3,
+            "UnboundLocalError": 3
+          }
+        },
+        "boundary": {
+          "tasks_with_site": 264,
+          "candidates": 2270,
+          "run": 1472,
+          "failed_tests": 1144,
+          "passed_tests": 328,
+          "failure_rate": 0.777,
+          "kept": 250,
+          "error_types": {
+            "AssertionError": 790,
+            "IndexError": 263,
+            "TypeError": 29,
+            "TimeoutError": 19,
+            "RecursionError": 19,
+            "KeyError": 7,
+            "ValueError": 7,
+            "UnboundLocalError": 5,
+            "ZeroDivisionError": 3,
+            "AttributeError": 2
+          }
+        },
+        "variable": {
+          "tasks_with_site": 433,
+          "candidates": 11163,
+          "run": 2898,
+          "failed_tests": 2674,
+          "passed_tests": 224,
+          "failure_rate": 0.923,
+          "kept": 431,
+          "error_types": {
+            "AssertionError": 1670,
+            "TypeError": 729,
+            "IndexError": 113,
+            "AttributeError": 73,
+            "TimeoutError": 40,
+            "UnboundLocalError": 14,
+            "ValueError": 10,
+            "ZeroDivisionError": 10,
+            "KeyError": 8,
+            "RecursionError": 7
+          }
+        }
+      },
+      "level2": {
+        "tasks_with_candidate": 433,
+        "candidates": 3813,
+        "run": 3813,
+        "failed_tests": 3772,
+        "passed_tests": 41,
+        "failure_rate": 0.989,
+        "kept": 433,
+        "kept_by_num_mutations": {
+          "2": 298,
+          "3": 135
+        },
+        "kept_by_bug_types": {
+          "operator+variable": 132,
+          "variable": 92,
+          "boundary+variable": 64,
+          "operator": 56,
+          "boundary+operator": 55,
+          "boundary+operator+variable": 21,
+          "boundary": 13
+        },
+        "error_types": {
+          "AssertionError": 2267,
+          "TypeError": 856,
+          "IndexError": 316,
+          "TimeoutError": 94,
+          "AttributeError": 85,
+          "RecursionError": 64,
+          "UnboundLocalError": 30,
+          "ValueError": 26,
+          "KeyError": 17,
+          "ZeroDivisionError": 12,
+          "OverflowError": 5
         }
       }
     }

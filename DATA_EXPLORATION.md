@@ -247,11 +247,11 @@ Next we move from reading the code to running it, as part of building the mutati
 
 1. **Validate references.** Run every reference solution against its tests in the sandbox (with a
    timeout) and drop any that fail under our Python version.
-2. **Measure mutation yield.** Done (pipeline v1), see Section 10: 1,876 train and 482 validation
-   examples.
+2. **Measure mutation yield.** Done, see Section 10: 2,741 train, 693 validation and 1,483 held-out
+   test examples (levels 1 and 2).
 3. **Count tokens.** Done, see Section 9: keep `max_seq_length = 1024`.
-4. **Confirm the split decision.** Choose the official split or one of the alternatives in Section 3,
-   based on the mutation yield.
+4. **Confirm the split decision.** Done: we keep the official split, since the mutation yield is high
+   enough (Section 10).
 
 ## 9. Token lengths
 
@@ -302,22 +302,23 @@ bounded.
   test of feedback).
 - Re-run this script once the mutation pipeline produces real buggy code and error messages.
 
-## 10. Mutation yield (pipeline v1)
+## 10. Mutation dataset
 
-[`src/mutate.py`](src/mutate.py) builds the first version of the training data. Statistics are written
-to [`exploration/mutation_stats.json`](exploration/mutation_stats.json) and the examples to
-`data/processed/{train,validation}.jsonl` (git-ignored). It uses `sandbox.py`, which needs Linux, macOS
-or WSL.
+[`src/mutate.py`](src/mutate.py) builds the training, validation and held-out test data. Statistics are
+written to [`exploration/mutation_stats.json`](exploration/mutation_stats.json) and the examples to
+`data/processed/{train,validation,test}.jsonl` (git-ignored). It uses `sandbox.py`, which needs Linux,
+macOS or WSL. A full run takes about 8 minutes on 16 cores.
 
 ```bash
-python src/mutate.py
+python src/mutate.py                  # all three splits
+python src/mutate.py --splits test    # one split; the other splits' statistics are kept
 ```
 
 **How it works.**
 
 1. Each reference solution is normalized (Section 5) and re-serialized with `ast.unparse`, then run
    in the sandbox. Only references that still pass are mutated.
-2. Every single-mutation site is listed (level 1 bugs only):
+2. Every single-mutation site is listed:
    - **Operator:** `+`↔`-`, `*`→`+`, `/`→`*`, `//`→`/`, `%`→`//`, `**`→`*`, `<`↔`<=`, `>`↔`>=`,
      `==`↔`!=`, `in`↔`not in`, `is`↔`is not`, `and`↔`or`
    - **Boundary:** ±1 on the `range()` stop, slice bounds, indices and integer literals in comparisons
@@ -325,41 +326,78 @@ python src/mutate.py
      replacement must be defined on an earlier line, and names that shadow built-ins are skipped.
 3. Duplicate mutants and mutants identical to the reference are dropped. Up to 10 candidates per task
    and bug type are sampled (seed 258) and run against the three tests with a 3 s timeout.
-4. A mutant is usable only if it **fails** at least one test. At most 3 are kept per task and bug type.
+4. **Level 1:** a mutant is usable only if it **fails** at least one test. At most 3 are kept per task
+   and bug type.
+5. **Level 2:** 2 or 3 of the single mutations that failed on their own are combined into one mutant,
+   so every bug in it is one the tests can detect and the model has to fix all of them. Each mutation
+   picks a bug type uniformly before picking a site, so the many variable sites don't crowd out the
+   other types. Two mutations are not combined if they hit the same node or one sits inside an
+   expression the other replaces. Up to 10 combinations are run per task and at most 3 failing ones
+   kept.
+6. **Test split:** MBPP tasks 11–510 go through the same steps with the same seed, but keep only **1**
+   mutant per task and bug type (and 1 level 2 mutant per task) to bound the evaluation cost. Tasks
+   1–10 are left out for few-shot prompts. These examples are for evaluation only.
 
-**Results.**
+**Final dataset.**
 
-| Train (373 valid tasks) | Tasks with a site | Candidates | Run | Fail tests | Pass tests | Kept |
+| Split | Tasks (valid) | Tasks with an example | Level 1 | Level 2 | Total |
+|---|---:|---:|---:|---:|---:|
+| Train | 374 (373) | 338 | 1,876 | 865 | **2,741** |
+| Validation | 90 (90) | 84 | 482 | 211 | **693** |
+| Test (held out) | 500 (498) | 479 | 1,050 | 433 | **1,483** |
+
+**Level 1 yield.** Train and validation are unchanged from pipeline v1.
+
+| Train | Tasks with a site | Candidates | Run | Fail tests | Pass tests | Kept |
 |---|---:|---:|---:|---:|---:|---:|
 | Operator | 265 | 1,262 | 1,088 | 910 (83.6%) | 178 | 568 |
 | Boundary | 194 | 1,606 | 1,086 | 857 (78.9%) | 229 | 487 |
 | Variable | 315 | 7,432 | 2,033 | 1,898 (93.4%) | 135 | 821 |
 | **Total** | | 10,300 | 4,207 | 3,665 (87.1%) | 542 | **1,876** |
 
-| Validation (90 tasks) | Tasks with a site | Candidates | Run | Fail tests | Pass tests | Kept |
+| Validation | Tasks with a site | Candidates | Run | Fail tests | Pass tests | Kept |
 |---|---:|---:|---:|---:|---:|---:|
 | Operator | 62 | 303 | 277 | 234 (84.5%) | 43 | 156 |
 | Boundary | 49 | 424 | 278 | 229 (82.4%) | 49 | 124 |
 | Variable | 78 | 2,152 | 531 | 508 (95.7%) | 23 | 202 |
 | **Total** | | 2,879 | 1,086 | 971 (89.4%) | 115 | **482** |
 
+| Test (cap 1) | Tasks with a site | Candidates | Run | Fail tests | Pass tests | Kept |
+|---|---:|---:|---:|---:|---:|---:|
+| Operator | 383 | 1,815 | 1,638 | 1,409 (86.0%) | 229 | 369 |
+| Boundary | 264 | 2,270 | 1,472 | 1,144 (77.7%) | 328 | 250 |
+| Variable | 433 | 11,163 | 2,898 | 2,674 (92.3%) | 224 | 431 |
+| **Total** | | 15,248 | 6,008 | 5,227 (87.0%) | 781 | **1,050** |
+
 "Pass tests" mutants are equivalent to the reference or not caught by MBPP's three tests. They are
 discarded.
 
+**Level 2 yield.**
+
+| Split | Tasks with a combination | Run | Fail tests | Pass tests | Kept | 2 / 3 mutations |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 305 | 2,691 | 2,672 (99.3%) | 19 | 865 | 565 / 300 |
+| Validation | 73 | 660 | 653 (98.9%) | 7 | 211 | 139 / 72 |
+| Test (cap 1) | 433 | 3,813 | 3,772 (98.9%) | 41 | 433 | 298 / 135 |
+
+In the kept train level 2 examples, 69% mix two or three bug types. Operator mutations appear in 58% of
+them, variable in 78% and boundary in 40%. The `bug_type` of a level 2 example lists the types it
+contains, for example `operator+variable`.
+
 Error types in the kept examples (the feedback the model sees):
 
-| Error type | Train | Validation |
-|---|---:|---:|
-| `AssertionError` (wrong output) | 1,325 (70.6%) | 335 (69.5%) |
-| `TypeError` | 264 (14.1%) | 66 (13.7%) |
-| `IndexError` | 179 (9.5%) | 42 (8.7%) |
-| `TimeoutError` | 34 (1.8%) | 13 (2.7%) |
-| Other (`AttributeError`, `RecursionError`, `ZeroDivisionError`, `ValueError`, `KeyError`, ...) | 74 (3.9%) | 26 (5.4%) |
+| Error type | Train L1 | Train L2 | Validation L1 | Validation L2 | Test L1 | Test L2 |
+|---|---:|---:|---:|---:|---:|---:|
+| `AssertionError` (wrong output) | 1,325 (70.6%) | 475 (54.9%) | 335 (69.5%) | 113 (53.6%) | 798 (76.0%) | 275 (63.5%) |
+| `TypeError` | 264 (14.1%) | 233 (26.9%) | 66 (13.7%) | 52 (24.6%) | 117 (11.1%) | 93 (21.5%) |
+| `IndexError` | 179 (9.5%) | 81 (9.4%) | 42 (8.7%) | 19 (9.0%) | 74 (7.0%) | 30 (6.9%) |
+| `TimeoutError` | 34 (1.8%) | 12 (1.4%) | 13 (2.7%) | 7 (3.3%) | 22 (2.1%) | 9 (2.1%) |
+| Other (`AttributeError`, `RecursionError`, `ZeroDivisionError`, `ValueError`, `KeyError`, ...) | 74 (3.9%) | 64 (7.4%) | 26 (5.4%) | 20 (9.5%) | 39 (3.7%) | 26 (6.0%) |
 
 **Feedback format.** The sandbox traceback is cleaned up so that it points to the buggy code rather
 than to the sandbox. It shows the failing assert, at most the 3 innermost frames (repeated recursive
-calls are collapsed) and the error, and it is capped at 500 characters. The median is 83 characters.
-Example (task 627, `==` → `!=`):
+calls are collapsed) and the error, and it is capped at 500 characters. The median is 83 characters
+for level 1 and 105 for level 2. Example (task 627, `==` → `!=`):
 
 ```
 Failed test: assert find_First_Missing([0,1,2,3],0,3) == 4
@@ -370,22 +408,50 @@ Traceback (most recent call last):
 RecursionError: maximum recursion depth exceeded
 ```
 
+Level 2 example (task 602, two boundary changes on the same line). The reference is
+`if str1[:index + 1].count(c) > 1:`:
+
+```python
+def first_repeated_char(str1):
+    for index, c in enumerate(str1):
+        if str1[:index].count(c) > 2:
+            return c
+    return 'None'
+```
+
+```
+Failed test: assert first_repeated_char("abcabc") == "a"
+AssertionError
+```
+
 Each JSONL line holds `task_id`, `split`, `problem`, `tests`, `buggy_code`, `feedback`, `fixed_code`,
-`bug_type`, `mutation` (e.g. `line 13: + -> -`), `error_type`, `level` (1) and `round` (1).
+`bug_type`, `mutation` (e.g. `line 13: + -> -`, with level 2 changes separated by `; `),
+`num_mutations` (1–3), `error_type`, `level` (1 or 2) and `round` (1).
 
 **Takeaways**
 
 - **Yield is high enough to keep the official split.** 338 of 374 train tasks produce at least one
-  example, with a median of 6 examples per task, so we don't need to rebalance (Section 3).
-- **Boundary bugs are the least balanced.** Only 194 train tasks have a boundary site, and boundary
-  mutants are the most often equivalent (21% pass all tests). The cap of 3 per task and bug type gives a
-  split of 30% operator, 26% boundary and 44% variable. Lowering the variable cap to 2 would even it out.
-- **MBPP's three tests catch most single mutations.** 87% of mutants fail. About 13% pass, which shows
-  why every mutant has to be run before it is kept.
-- **Known issue:** train task 927 fails because `sandbox.py` runs `test_setup_code` before the
-  solution, and that task's setup code uses the solution's `Node` class. Running the setup after the
-  solution would fix it.
+  example, so we don't rebalance (Section 3). Level 2 adds 46% more training examples on top of level 1.
+- **Level 2 bugs almost always fail (99%)**, because each mutation in them already fails alone. The
+  few that pass are combinations where the bugs cancel out.
+- **Level 2 feedback is more often a crash.** A variable swap is in 78% of level 2 bugs, so `TypeError`
+  doubles (27% vs 14% in train). The model sees more tracebacks and fewer plain wrong outputs.
+- **Caps stay at 3 per task and bug type.** Level 1 train is 30% operator, 26% boundary and 44%
+  variable. That is uneven but not extreme, and lowering the variable cap to 2 would drop about 250
+  examples. If needed, the trainer can reweight by `bug_type` instead.
+- **The test set is small enough to evaluate.** 1,483 programs × up to 3 rounds × 3 systems is at most
+  about 13,000 generations. Results can be broken down by `level` and `bug_type`.
 
-**Next (check-in 3).** Level 2 bugs (2–3 mutations), the final per-type caps, test-split mutants for
-the held-out evaluation (`python src/mutate.py --splits test`), and re-running
-`exploration/token_lengths.py` on the real examples.
+**Known issues**
+
+- **Train task 927 and test task 367 fail** because `sandbox.py` runs `test_setup_code` before the
+  solution, and both setup codes use the solution's `Node` class. Running the setup after the solution
+  would fix it.
+- **Test task 123** (sum of amicable numbers up to 9,999) takes longer than the 3 s timeout, so it is
+  dropped.
+- **MBPP duplicate across splits:** test task 248 and train task 704 are the same problem ("harmonic sum
+  of n-1") with the same solution. No task ID overlaps, but 3 test examples come from a solution the
+  model trains on. The evaluation should exclude task 248, or report results with and without it.
+- `exploration/token_lengths.py` still measures the reference solutions. It has not been re-run on these
+  examples yet. Level 2 feedback is longer (median 105 vs 83 characters), but every feedback is capped at
+  500 characters.
