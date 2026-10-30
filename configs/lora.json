@@ -1,0 +1,18 @@
+{
+  "name": "lora",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "load_in_4bit": false,
+  "base_precision": "bf16",
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "lora_dropout": 0.05,
+  "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+  "learning_rate": 2e-4,
+  "lr_scheduler_type": "cosine",
+  "warmup_ratio": 0.03,
+  "num_train_epochs": 3,
+  "max_seq_length": 1024,
+  "per_device_train_batch_size": 1,
+  "gradient_accumulation_steps": 16,
+  "seed": 42
+}
