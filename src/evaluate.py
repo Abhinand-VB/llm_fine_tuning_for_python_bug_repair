@@ -40,25 +40,60 @@ def main():
     print("=== Starting Evaluation ===")
     
     # Load the test tasks
-    
+    examples = load_test_examples(TEST_FILE, TASK_LIMIT)
+    print(f"Loaded {len(examples)} test tasks.")
 
     # Load the AI Tokenizer & Model
-    
+    print("Loading AI model...")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID, 
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32, 
+        device_map="auto" if torch.cuda.is_available() else None
+    )
 
     # If trained a LoRA adapter - plug it in
-    
+    if ADAPTER_PATH:
+        print(f"Attaching LoRA adapter from {ADAPTER_PATH}...")
+        model = PeftModel.from_pretrained(model, ADAPTER_PATH)
+
+    model.eval()
 
     # Track of Scores
-    
+    solved_count = 0
+    results_log = []
 
     # Looping through each test problem
-    
+    for i, ex in enumerate(examples):
+        problem = ex["problem"]
+        tests = ex["tests"]
+        code = ex["buggy_code"]
+        feedback = ex["feedback"]
+        
+        print(f"\n--- Testing Task {ex.get('task_id')} ---")
+        solved_in_round = None
+
+        # `MAX_ROUNDS` tries for model to fix bug
+        
+
+        # Save result for this task
+        
 
     # Print final summary & save to file
-    
+    pass_rate = solved_count / len(examples) if examples else 0.0
+    print("\n==============================")
+    print(f"Evaluation Finished!")
+    print(f"Total Pass Rate: {pass_rate:.1%}")
+    print("==============================\n")
 
     # Save results into json file
-    
+    output_path = Path("results/simple_eval_report.json")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(results_log, indent=2))
+    print(f"Report saved to {output_path}")
 
 
 if __name__ == "__main__":
