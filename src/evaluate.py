@@ -77,10 +77,42 @@ def main():
         solved_in_round = None
 
         # `MAX_ROUNDS` tries for model to fix bug
-        
+        for round_num in range(1, MAX_ROUNDS + 1):
+            # Build the prompt to send to the AI model
+            prompt = render_prompt(tokenizer, problem, code, feedback, few_shot=default_few_shot())
+            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+            # Generate the fix
+            with torch.no_grad():
+                outputs = model.generate(
+                    **inputs, 
+                    max_new_tokens=512, 
+                    do_sample=False,
+                    pad_token_id=tokenizer.eos_token_id
+                )
+
+            # Extract clean code from the AI's reply
+            reply = tokenizer.decode(outputs[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+            code = extract_code(reply) or code
+
+            # Test the code in your sandbox
+            passed, error_msg = run(code, tests, "")
+            
+            if passed:
+                print(f"Success! Solved in Round {round_num}")
+                solved_in_round = round_num
+                solved_count += 1
+                break
+            else:
+                print(f"Round {round_num}: Failed tests. Feeding error back to AI...")
+                # Format the error message to send back to the AI for the next try
+                feedback, _ = format_feedback(code, tests, error_msg or "")
 
         # Save result for this task
-        
+        results_log.append({
+            "task_id": ex.get("task_id"),
+            "solved_round": solved_in_round
+        })
 
     # Print final summary & save to file
     pass_rate = solved_count / len(examples) if examples else 0.0
