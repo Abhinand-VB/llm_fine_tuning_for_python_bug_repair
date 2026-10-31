@@ -78,7 +78,7 @@ def main():
 
         # `MAX_ROUNDS` tries for model to fix bug
         for round_num in range(1, MAX_ROUNDS + 1):
-            # Build the prompt to send to the AI model
+            # Build the prompt to send to the model
             prompt = render_prompt(tokenizer, problem, code, feedback, few_shot=default_few_shot())
             inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
@@ -91,7 +91,7 @@ def main():
                     pad_token_id=tokenizer.eos_token_id
                 )
 
-            # Extract clean code from the AI's reply
+            # Extract clean code
             reply = tokenizer.decode(outputs[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
             code = extract_code(reply) or code
 
@@ -105,7 +105,7 @@ def main():
                 break
             else:
                 print(f"Round {round_num}: Failed tests. Feeding error back to AI...")
-                # Format the error message to send back to the AI for the next try
+                # Format the error message to send back for the next try
                 feedback, _ = format_feedback(code, tests, error_msg or "")
 
         # Save result for this task
