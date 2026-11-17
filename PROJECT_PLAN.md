@@ -27,11 +27,11 @@ Leads follow the roles in the proposal.
 | # | Phase | Due | Lead | Support | Output |
 |---|---|---|---|---|---|
 | 0 | Data exploration ✅ | Check-in 1 (Oct 14) | Abhinand, Neha | All | `DATA_EXPLORATION.md`, `exploration/`, `explore_mbpp.py` |
-| 1 | Execution sandbox | Check-in 2 (Oct 19) | Neha | Abhinand | `src/sandbox.py` |
-| 2 | Bug-mutation pipeline | v1 by Check-in 2, final by Check-in 3 (Nov 2) | Abhinand | Sai Bhavana | `src/mutate.py`, `data/processed/*.jsonl` |
-| 3 | Prompt format and baseline | Check-in 3 (Nov 2) | Neha | Abhinand | `src/prompts.py`, baseline results |
-| 4 | LoRA / QLoRA training on HPC | HPC setup by Check-in 2, test runs by Check-in 3, full runs by Check-in 4 (Nov 16) | Sai Bhavana | Abhinand | `src/train.py`, `slurm/*.sbatch`, adapters |
-| 5 | Multi-round evaluation | Check-in 4 (Nov 16) | Neha | Abhinand | `src/evaluate.py`, `results/*.json` |
+| 1 | Execution sandbox ✅ | Check-in 2 (Oct 19) | Neha | Abhinand | `src/sandbox.py` |
+| 2 | Bug-mutation pipeline ✅ | v1 by Check-in 2, final by Check-in 3 (Nov 2) | Abhinand | Sai Bhavana | `src/mutate.py`, `data/processed/*.jsonl` |
+| 3 | Prompt format and baseline ✅ | Check-in 3 (Nov 2) | Neha | Abhinand | `src/prompts.py`, baseline results |
+| 4 | LoRA / QLoRA training on HPC ✅ | HPC setup by Check-in 2, test runs by Check-in 3, full runs by Check-in 4 (Nov 16) | Sai Bhavana | Abhinand | `src/train.py`, `slurm/*.sbatch`, adapters |
+| 5 | Multi-round evaluation ✅ | Check-in 4 (Nov 16) | Neha | Abhinand | `src/evaluate.py`, `results/*.json` |
 | 6 | Analysis and report | Report (Nov 27), slides (Nov 30) | Neha | All | Charts, tables, final report, slides |
 
 ### Phase 1: Execution sandbox
@@ -121,14 +121,14 @@ Metrics:
 |---|---|---|
 | Check-in 1, Oct 14 | ✅ Data exploration, project plan, repo set up | Abhinand, Neha |
 | Check-in 1, Oct 14 | ✅ Prompt lengths measured with the Qwen tokenizer | Sai Bhavana |
-| Check-in 2, Oct 19 | Sandbox done and reference solutions validated | Neha (lead), Abhinand |
+| Check-in 2, Oct 19 | ✅ Sandbox done and reference solutions validated | Neha (lead), Abhinand |
 | Check-in 2, Oct 19 | ✅ Mutation pipeline v1 with first survival counts per bug type | Abhinand (lead), Sai Bhavana |
-| Check-in 2, Oct 19 | HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
+| Check-in 2, Oct 19 | ✅ HPC access and training environment ready | Sai Bhavana (lead), Abhinand |
 | Check-in 3, Nov 2 | ✅ Final mutation dataset with survival statistics | Abhinand (lead), Sai Bhavana |
-| Check-in 3, Nov 2 | Prompt format and prompt-only baseline results | Neha (lead), Abhinand |
-| Check-in 3, Nov 2 | LoRA and QLoRA test runs on the HPC | Sai Bhavana (lead), Abhinand |
-| Check-in 4, Nov 16 | Full LoRA and QLoRA training runs (extra seeds if time) | Sai Bhavana (lead), Abhinand |
-| Check-in 4, Nov 16 | Three-round evaluation on MBPP test and HumanEval | Neha (lead), Abhinand |
+| Check-in 3, Nov 2 | ✅ Prompt format and prompt-only baseline results | Neha (lead), Abhinand |
+| Check-in 3, Nov 2 | ✅ LoRA and QLoRA test runs on the HPC | Sai Bhavana (lead), Abhinand |
+| Check-in 4, Nov 16 | ✅ Full LoRA and QLoRA training runs (extra seeds if time) | Sai Bhavana (lead), Abhinand |
+| Check-in 4, Nov 16 | ✅ Three-round evaluation on MBPP test and HumanEval | Neha (lead), Abhinand |
 | Report, Nov 27 | Analysis, qualitative examples, charts and final paper | Neha (lead), all members |
 | Presentation, Nov 30 | Slides (6 max) and software demo | All members |
 
