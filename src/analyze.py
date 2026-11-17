@@ -231,8 +231,10 @@ def fig_accuracy_vs_compute(plt, rows):
         ax.scatter([minutes], [100 * acc], s=90, color=COLORS[s], marker=MARKERS[s],
                    edgecolors="white", linewidths=2, zorder=3)
         mem_txt = f", {mem:.1f} GB" if mem else ""
+        # QLoRA's label goes below its point so it never collides with LoRA's, which sits close above.
+        offset = (8, -14) if s == "qlora" else (8, 4)
         ax.annotate(f"{LABELS[s].split(' ')[0]} ({100 * acc:.1f}%{mem_txt})", (minutes, 100 * acc),
-                    xytext=(8, 4), textcoords="offset points", fontsize=8, color=INK)
+                    xytext=offset, textcoords="offset points", fontsize=8, color=INK)
     xmax = max(p[1] for p in pts)
     ax.set_xlim(-0.05 * max(xmax, 1), 1.45 * max(xmax, 1))
     ax.set_ylim(0, 100)
@@ -278,9 +280,8 @@ def fig_loss(plt, train):
         tr = [(h["step"], h["loss"]) for h in hist if "loss" in h]
         ev = [(h["step"], h["eval_loss"]) for h in hist if "eval_loss" in h]
         if tr:
+            # Both train curves converge near zero, so end labels would overlap; the legend names them.
             ax.plot(*zip(*tr), color=COLORS[s], linewidth=2, label=f"{LABELS[s]} train")
-            ax.annotate(LABELS[s], tr[-1], xytext=(6, 0), textcoords="offset points",
-                        fontsize=8, color=INK, va="center")
         if ev:
             ax.plot(*zip(*ev), color=COLORS[s], linewidth=0, marker=MARKERS[s], markersize=8,
                     markeredgecolor="white", markeredgewidth=1.5, label=f"{LABELS[s]} validation")
