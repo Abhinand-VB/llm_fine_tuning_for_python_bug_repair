@@ -32,7 +32,7 @@ Neha Rao (016403179) · Abhinand Vijayakumar Binsu (019107920) · Sai Bhavana Al
 
 ➔    Gains hold for every bug type and grow with difficulty: boundary bugs 23.9% → 61.2% (LoRA), and the hardest level-2 mix (boundary+operator+variable) 9.5% → 61.9%.
 
-➔    **Specialization cost:** on from-scratch generation (HumanEval option (a)) the fine-tuned models collapse: LoRA returns the prompt stub unchanged, with no function body, on 116 of 164 tasks. The repair data teaches "copy the code and change one or two tokens", so given an empty stub the adapter copies it. A mixed training set (repair plus some from-scratch MBPP solutions) is the natural fix and a planned follow-up.
+➔    **Specialization cost:** on from-scratch generation (HumanEval option (a)) the fine-tuned models collapse: LoRA returns the prompt stub unchanged, with no function body, on 119 of 164 tasks. The repair data teaches "copy the code and change one or two tokens", so given an empty stub the adapter copies it. A mixed training set (repair plus some from-scratch MBPP solutions) is the natural fix and a planned follow-up.
 
 ➔    Per-task cost on an A100 is 0.21 s (baseline), 0.26 s (LoRA) and 0.39 s (QLoRA) for the whole three-round loop on MBPP, with ≤ 2.7 GB peak memory during evaluation.
 
