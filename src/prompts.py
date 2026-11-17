@@ -14,6 +14,7 @@ Functions:
     render_prompt(tokenizer, problem, code, feedback, ...) -> str         templated prompt string
     extract_code(text) -> str                                            function out of model output
     default_few_shot() -> list[dict]                                     1 illustrative repair example
+    render_generation_prompt(tokenizer, code_prompt) -> str              first attempt (HumanEval (a))
 """
 
 import re
@@ -109,6 +110,32 @@ def build_messages(problem, code, feedback, few_shot=None):
 def render_prompt(tokenizer, problem, code, feedback, few_shot=None):
     """Render the messages through the model's chat template, ready for generation."""
     messages = build_messages(problem, code, feedback, few_shot=few_shot)
+    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+
+# ------------------------------------------------------------------ first attempt (HumanEval (a))
+
+GENERATION_SYSTEM_PROMPT = (
+    "You are an expert Python programmer. Complete the given Python function so that it "
+    "satisfies its docstring. Return the complete function (with its signature and any imports "
+    "or helper definitions it needs) inside one ```python code block, and nothing else."
+)
+
+
+def build_generation_messages(code_prompt):
+    """Messages for the first, from-scratch attempt at a HumanEval task (option (a)).
+
+    Only round 0 uses this prompt; the repair rounds that follow use `build_messages`, the same
+    prompt as the MBPP repair task, so the fine-tuned adapters see their training format.
+    """
+    return [
+        {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
+        {"role": "user", "content": f"```python\n{code_prompt.strip()}\n```"},
+    ]
+
+
+def render_generation_prompt(tokenizer, code_prompt):
+    messages = build_generation_messages(code_prompt)
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
 
