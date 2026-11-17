@@ -107,6 +107,40 @@ setups, adds LoRA (r=16, alpha=32, all projections), runs one training step on a
 
 Cluster details found during setup: GPU type used, GRES name for requesting it, Python module loaded.
 
+## 6. Check-in 4 pipeline (full training + evaluation)
+
+Everything for check-in 4 is one command on coe-hpc3, from the repo folder:
+
+```bash
+mkdir -p logs
+MAX_STEPS=20 bash slurm/run_all.sh     # optional: short end-to-end check first
+bash slurm/run_all.sh                  # full LoRA + QLoRA training, then all evaluations
+squeue -u $USER
+```
+
+`run_all.sh` submits the two training jobs and three `slurm/evaluate.sbatch` jobs (baseline,
+LoRA, QLoRA); the LoRA/QLoRA evaluations wait for their training job (`--dependency=afterok`).
+Each evaluation runs MBPP test mutants, HumanEval mutants and HumanEval generate + repair, and
+builds `data/processed/humaneval_mutants.jsonl` on first use. When the jobs finish:
+
+```bash
+source .venv/bin/activate && python src/analyze.py    # results/summary.md, figures/, examples.md
+```
+
+Notes from the first full run (Nov 16, account `019107920`):
+- Wheels downloaded on coe-hpc1 with `module load python3/3.11.5` (its default `python3` is 3.6,
+  too old for pip to target Python 3.12) and `pip download ... --python-version 3.12`, adding
+  `--platform manylinux_2_24_x86_64`; without it pip silently picks bitsandbytes 0.42, too old
+  for transformers 5. Torch came from the CUDA 12.6 index (`torch 2.7.1+cu126`); the A100 nodes
+  run driver 590.
+- transformers 5 removed `warmup_ratio`; `src/train.py` passes the ratio as a float
+  `warmup_steps` when the old name is missing.
+- `srun -p defq ... --mem=16G` was refused; `-p cpuqs --mem=8G` works for the offline install.
+- A 20-step LoRA test step takes ~4.2 s on an A100 (batch 1 × 16 accumulation), so a full
+  3-epoch run (~514 optimizer steps) takes roughly 40 minutes.
+- Files copied from a Windows checkout have CRLF line endings, which break the bash scripts;
+  strip them with `sed -i 's/$//' slurm/*`.
+
 ## Troubleshooting
 
 - **`torch.cuda.is_available()` is False in the job:** the job didn't get a GPU (check
