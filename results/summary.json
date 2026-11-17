@@ -1,0 +1,380 @@
+{
+  "baseline": {
+    "trainable_params": 0,
+    "trainable_percent": 0.0,
+    "train_minutes": 0.0,
+    "train_peak_gpu_gb": null,
+    "final_train_loss": null,
+    "train_max_steps": null,
+    "train_host": null,
+    "mbpp": {
+      "n": 1483,
+      "pass_rate": 0.3628,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.3351,
+        "2": 0.3614,
+        "3": 0.3628
+      },
+      "by_bug_type": {
+        "variable": {
+          "n": 523,
+          "repair_rate": 0.4532
+        },
+        "operator": {
+          "n": 425,
+          "repair_rate": 0.3671
+        },
+        "boundary": {
+          "n": 263,
+          "repair_rate": 0.2395
+        },
+        "operator+variable": {
+          "n": 132,
+          "repair_rate": 0.3561
+        },
+        "boundary+variable": {
+          "n": 64,
+          "repair_rate": 0.2969
+        },
+        "boundary+operator": {
+          "n": 55,
+          "repair_rate": 0.2545
+        },
+        "boundary+operator+variable": {
+          "n": 21,
+          "repair_rate": 0.0952
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 1050,
+          "repair_rate": 0.3914
+        },
+        "2": {
+          "n": 433,
+          "repair_rate": 0.2933
+        }
+      },
+      "unchanged_rate_round1": 0.3237,
+      "seconds_per_task": 0.21,
+      "eval_peak_gpu_gb": 2.173,
+      "few_shot": 1,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval": {
+      "n": 395,
+      "pass_rate": 0.2658,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.2481,
+        "2": 0.2633,
+        "3": 0.2658
+      },
+      "by_bug_type": {
+        "operator": {
+          "n": 145,
+          "repair_rate": 0.2759
+        },
+        "variable": {
+          "n": 126,
+          "repair_rate": 0.373
+        },
+        "boundary": {
+          "n": 124,
+          "repair_rate": 0.1452
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 395,
+          "repair_rate": 0.2658
+        }
+      },
+      "unchanged_rate_round1": 0.4835,
+      "seconds_per_task": 0.501,
+      "eval_peak_gpu_gb": 2.843,
+      "few_shot": 1,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval-gen": {
+      "n": 164,
+      "pass_rate": 0.5549,
+      "pass_at_1": 0.5122,
+      "repair_rate_by_round": {
+        "1": 0.0875,
+        "2": 0.0875,
+        "3": 0.0875
+      },
+      "by_bug_type": {
+        "generation": {
+          "n": 80,
+          "repair_rate": 0.0875
+        }
+      },
+      "by_level": {
+        "0": {
+          "n": 80,
+          "repair_rate": 0.0875
+        }
+      },
+      "unchanged_rate_round1": 0.5625,
+      "seconds_per_task": 0.769,
+      "eval_peak_gpu_gb": 2.693,
+      "few_shot": 1,
+      "device": "NVIDIA A100-PCIE-40GB"
+    }
+  },
+  "lora": {
+    "trainable_params": 8798208,
+    "trainable_percent": 1.75,
+    "train_minutes": 30.83,
+    "train_peak_gpu_gb": 1.293,
+    "final_train_loss": 0.0058,
+    "train_max_steps": -1,
+    "train_host": "cs002.hpc.coe",
+    "mbpp": {
+      "n": 1483,
+      "pass_rate": 0.6811,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.6736,
+        "2": 0.6811,
+        "3": 0.6811
+      },
+      "by_bug_type": {
+        "variable": {
+          "n": 523,
+          "repair_rate": 0.7476
+        },
+        "operator": {
+          "n": 425,
+          "repair_rate": 0.6494
+        },
+        "boundary": {
+          "n": 263,
+          "repair_rate": 0.6122
+        },
+        "operator+variable": {
+          "n": 132,
+          "repair_rate": 0.6894
+        },
+        "boundary+variable": {
+          "n": 64,
+          "repair_rate": 0.6719
+        },
+        "boundary+operator": {
+          "n": 55,
+          "repair_rate": 0.6364
+        },
+        "boundary+operator+variable": {
+          "n": 21,
+          "repair_rate": 0.619
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 1050,
+          "repair_rate": 0.6905
+        },
+        "2": {
+          "n": 433,
+          "repair_rate": 0.6582
+        }
+      },
+      "unchanged_rate_round1": 0.0249,
+      "seconds_per_task": 0.255,
+      "eval_peak_gpu_gb": 2.715,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval": {
+      "n": 395,
+      "pass_rate": 0.7241,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.7038,
+        "2": 0.7241,
+        "3": 0.7241
+      },
+      "by_bug_type": {
+        "operator": {
+          "n": 145,
+          "repair_rate": 0.7448
+        },
+        "variable": {
+          "n": 126,
+          "repair_rate": 0.7222
+        },
+        "boundary": {
+          "n": 124,
+          "repair_rate": 0.7016
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 395,
+          "repair_rate": 0.7241
+        }
+      },
+      "unchanged_rate_round1": 0.0633,
+      "seconds_per_task": 0.603,
+      "eval_peak_gpu_gb": 3.815,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval-gen": {
+      "n": 164,
+      "pass_rate": 0.0793,
+      "pass_at_1": 0.0793,
+      "repair_rate_by_round": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.0
+      },
+      "by_bug_type": {
+        "generation": {
+          "n": 151,
+          "repair_rate": 0.0
+        }
+      },
+      "by_level": {
+        "0": {
+          "n": 151,
+          "repair_rate": 0.0
+        }
+      },
+      "unchanged_rate_round1": 0.9669,
+      "seconds_per_task": 1.339,
+      "eval_peak_gpu_gb": 3.284,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    }
+  },
+  "qlora": {
+    "trainable_params": 8798208,
+    "trainable_percent": 2.716,
+    "train_minutes": 42.03,
+    "train_peak_gpu_gb": 1.146,
+    "final_train_loss": 0.0061,
+    "train_max_steps": -1,
+    "train_host": "cs001.hpc.coe",
+    "mbpp": {
+      "n": 1483,
+      "pass_rate": 0.65,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.6365,
+        "2": 0.65,
+        "3": 0.65
+      },
+      "by_bug_type": {
+        "variable": {
+          "n": 523,
+          "repair_rate": 0.7361
+        },
+        "operator": {
+          "n": 425,
+          "repair_rate": 0.6141
+        },
+        "boundary": {
+          "n": 263,
+          "repair_rate": 0.5627
+        },
+        "operator+variable": {
+          "n": 132,
+          "repair_rate": 0.6742
+        },
+        "boundary+variable": {
+          "n": 64,
+          "repair_rate": 0.625
+        },
+        "boundary+operator": {
+          "n": 55,
+          "repair_rate": 0.5636
+        },
+        "boundary+operator+variable": {
+          "n": 21,
+          "repair_rate": 0.4762
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 1050,
+          "repair_rate": 0.659
+        },
+        "2": {
+          "n": 433,
+          "repair_rate": 0.6282
+        }
+      },
+      "unchanged_rate_round1": 0.0276,
+      "seconds_per_task": 0.385,
+      "eval_peak_gpu_gb": 2.221,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval": {
+      "n": 395,
+      "pass_rate": 0.6456,
+      "pass_at_1": null,
+      "repair_rate_by_round": {
+        "1": 0.6405,
+        "2": 0.6456,
+        "3": 0.6456
+      },
+      "by_bug_type": {
+        "operator": {
+          "n": 145,
+          "repair_rate": 0.6414
+        },
+        "variable": {
+          "n": 126,
+          "repair_rate": 0.6825
+        },
+        "boundary": {
+          "n": 124,
+          "repair_rate": 0.6129
+        }
+      },
+      "by_level": {
+        "1": {
+          "n": 395,
+          "repair_rate": 0.6456
+        }
+      },
+      "unchanged_rate_round1": 0.0582,
+      "seconds_per_task": 1.116,
+      "eval_peak_gpu_gb": 3.32,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    },
+    "humaneval-gen": {
+      "n": 164,
+      "pass_rate": 0.0122,
+      "pass_at_1": 0.0122,
+      "repair_rate_by_round": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.0
+      },
+      "by_bug_type": {
+        "generation": {
+          "n": 162,
+          "repair_rate": 0.0
+        }
+      },
+      "by_level": {
+        "0": {
+          "n": 162,
+          "repair_rate": 0.0
+        }
+      },
+      "unchanged_rate_round1": 0.963,
+      "seconds_per_task": 2.153,
+      "eval_peak_gpu_gb": 2.789,
+      "few_shot": 0,
+      "device": "NVIDIA A100-PCIE-40GB"
+    }
+  }
+}
