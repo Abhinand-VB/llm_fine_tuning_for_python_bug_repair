@@ -19,29 +19,24 @@ Outputs:
     adapters/<name>/            the trained LoRA adapter (git-ignored)
     results/train_<name>.json   trainable params, peak GPU memory, wall-clock time, final loss
 
-NOTE: the prompt format below mirrors src/prompts.py (Phase 3). The two branches are developed
-separately; once they merge, train.py should import build_messages from src/prompts.py so the
-training prompt and the inference prompt stay identical.
+The prompt comes from src/prompts.py (zero-shot `build_messages`), the same function the
+evaluation harness uses, so the training prompt and the inference prompt are identical.
 """
 
 import argparse
 import json
 import os
 import socket
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "processed"
+sys.path.insert(0, str(ROOT / "src"))
 
-SYSTEM_PROMPT = (
-    "You are an expert Python programmer fixing buggy code. You are given a problem "
-    "description, a candidate solution that fails its unit tests, and the feedback from "
-    "running those tests. Return the corrected solution as a single Python function (plus any "
-    "helper definitions it needs) inside one ```python code block, and nothing else: no "
-    "explanation, no extra prose."
-)
+from prompts import build_messages  # noqa: E402
 
 
 def load_config(path):
@@ -49,15 +44,6 @@ def load_config(path):
     # Allow the offline HPC to override the model path without editing the config.
     cfg["model_id"] = os.environ.get("MODEL_PATH", cfg["model_id"])
     return cfg
-
-
-def user_turn(problem, code, feedback):
-    parts = ["Problem:", problem.strip(), "", "Current code:", "```python", code.strip(), "```"]
-    feedback = (feedback or "").strip()
-    if feedback:
-        parts += ["", "Test feedback:", feedback]
-    parts += ["", "Return the corrected function."]
-    return "\n".join(parts)
 
 
 def build_dataset(tokenizer, split):
@@ -75,10 +61,8 @@ def build_dataset(tokenizer, split):
             if not line:
                 continue
             ex = json.loads(line)
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_turn(ex["problem"], ex["buggy_code"], ex["feedback"])},
-            ]
+            # Zero-shot: the adapter learns the task, so no few-shot example in the prompt.
+            messages = build_messages(ex["problem"], ex["buggy_code"], ex["feedback"], few_shot=[])
             prompt = tokenizer.apply_chat_template(messages, tokenize=False,
                                                    add_generation_prompt=True)
             rows["prompt"].append(prompt)
@@ -134,6 +118,13 @@ def main():
     print(f"[{name}] train={len(train_ds)} val={len(eval_ds)} examples; "
           f"dtype={'bf16' if bf16 else 'fp16'}; 4bit={cfg['load_in_4bit']}")
 
+    # transformers 5 dropped `warmup_ratio`; a float `warmup_steps` below 1 is a ratio there.
+    import inspect
+    if "warmup_ratio" in inspect.signature(SFTConfig.__init__).parameters:
+        warmup = {"warmup_ratio": cfg["warmup_ratio"]}
+    else:
+        warmup = {"warmup_steps": cfg["warmup_ratio"]}
+
     sft = SFTConfig(
         output_dir=str(out_dir),
         num_train_epochs=cfg["num_train_epochs"],
@@ -142,7 +133,7 @@ def main():
         gradient_accumulation_steps=cfg["gradient_accumulation_steps"],
         learning_rate=cfg["learning_rate"],
         lr_scheduler_type=cfg["lr_scheduler_type"],
-        warmup_ratio=cfg["warmup_ratio"],
+        **warmup,
         max_length=cfg["max_seq_length"],
         bf16=bf16, fp16=not bf16,
         logging_steps=10,
@@ -180,6 +171,8 @@ def main():
         "final_train_loss": round(train_result.training_loss, 4),
         "peak_gpu_memory_gb": round(torch.cuda.max_memory_allocated() / 1024 ** 3, 3)
         if torch.cuda.is_available() else None,
+        # Loss curves: every logged training step and the per-epoch validation loss.
+        "log_history": trainer.state.log_history,
     }
     out_json = ROOT / "results" / f"train_{name}.json"
     out_json.parent.mkdir(parents=True, exist_ok=True)
