@@ -10,6 +10,9 @@ up to three rounds to fix a buggy program. After every round, the failing unit-t
 
 - [Data exploration](DATA_EXPLORATION.md): dataset sources, splits, statistics and quality findings
 - [Project plan](PROJECT_PLAN.md): phases, timeline, open decisions, risks and report outline
+- [HPC setup](docs/HPC_SETUP.md): environment on SJSU coe-hpc3 and the one-command check-in 4 pipeline
+- [Results](results/summary.md): main table, repair rate by round, bug-type breakdown, charts
+  ([qualitative examples](results/examples.md))
 
 ## Motivation
 
@@ -69,6 +72,23 @@ Evaluation runs on held-out MBPP tasks and on HumanEval.
 - Training time
 
 **Deliverables**: comparison tables and charts of accuracy against compute for the baseline, LoRA and QLoRA.
+
+## Running the pipeline
+
+The sandbox uses Unix-only modules, so run everything on Linux, macOS or WSL.
+
+```bash
+pip install -r requirements.txt
+python src/mutate.py                 # MBPP mutants -> data/processed/{train,validation,test}.jsonl
+python src/data.py                   # HumanEval mutants -> data/processed/humaneval_mutants.jsonl
+python src/train.py --config configs/lora.json      # adapters/lora, results/train_lora.json
+python src/train.py --config configs/qlora.json     # adapters/qlora, results/train_qlora.json
+python src/evaluate.py --system baseline --eval-set mbpp   # also: lora / qlora; humaneval, humaneval-gen
+python src/analyze.py                # results/summary.md, results/figures/, results/examples.md
+```
+
+On the SJSU HPC, `bash slurm/run_all.sh` submits the training and every evaluation as SLURM jobs
+(see [docs/HPC_SETUP.md](docs/HPC_SETUP.md)).
 
 ## Team
 

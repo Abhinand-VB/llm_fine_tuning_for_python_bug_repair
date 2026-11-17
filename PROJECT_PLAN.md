@@ -140,14 +140,16 @@ Metrics:
 ├── PROJECT_PLAN.md
 ├── requirements.txt
 ├── exploration/            # dataset statistics and figures
+├── sandbox.py              # safe code execution (subprocess + timeout)
 ├── src/
-│   ├── data.py             # loading and preprocessing MBPP / HumanEval
-│   ├── sandbox.py          # safe code execution
-│   ├── mutate.py           # bug injection
+│   ├── mutate.py           # bug injection -> data/processed/{train,validation,test}.jsonl
+│   ├── data.py             # evaluation sets; HumanEval tests + HumanEval mutants
 │   ├── prompts.py          # prompt template and code extraction
+│   ├── baseline.py         # first prompt-only baseline script (superseded by evaluate.py)
 │   ├── train.py            # LoRA / QLoRA training
-│   └── evaluate.py         # multi-round repair evaluation
-├── slurm/                  # .sbatch job scripts for SJSU HPC
+│   ├── evaluate.py         # multi-round repair evaluation, all systems and eval sets
+│   └── analyze.py          # tables, charts and qualitative examples
+├── slurm/                  # .sbatch job scripts for SJSU HPC; run_all.sh submits check-in 4
 ├── configs/                # training configs (baseline, lora, qlora)
 ├── data/                   # raw/ and processed/ (git-ignored)
 └── results/                # metrics JSON, charts
@@ -155,17 +157,18 @@ Metrics:
 
 ## Open decisions
 
-1. **How to use HumanEval.** Choose one of:
-   - **(a)** The model writes a solution from the prompt, then repairs it over three rounds using test
-     feedback. This matches "pass@1".
-   - **(b)** Mutate canonical solutions with the same pipeline and repair them. This matches the
-     training task more closely.
+1. **How to use HumanEval.** Decided: report both.
+   - **(a)** `humaneval-gen`: the model writes a solution from the prompt (round 0 = pass@1), then
+     repairs it over three rounds using test feedback. This measures end-to-end usefulness.
+   - **(b)** `humaneval`: canonical solutions mutated by the same pipeline (395 mutants over 156
+     tasks, one per task and bug type) and repaired. This matches the training task.
 
-   Option (a) measures end-to-end usefulness; option (b) is cleaner. We could report both.
-2. **Visible versus hidden tests.** If the feedback comes from the same tests used for scoring,
-   results are optimistic. For HumanEval, we could use the docstring examples or a subset of asserts as
-   visible feedback and score on the full test. MBPP has only three tests, so we'll probably use all
-   three and note it as a limitation.
+   Both are built by `src/data.py`; HumanEval's `check(candidate)` is inlined into an MBPP-style
+   assert list so the same sandbox and feedback formatter apply.
+2. **Visible versus hidden tests.** Decided for now: the feedback comes from the same tests used
+   for scoring, on both MBPP (only three tests) and HumanEval. Results are therefore optimistic in
+   absolute terms; the comparison between systems is fair because all three see the same
+   feedback. Noted as a limitation.
 3. **Split.** Decided: keep the official MBPP split. The mutation yield is high enough
    (`DATA_EXPLORATION.md` §10).
 4. **Full or sanitized MBPP.** Full gives more data; sanitized gives cleaner problem statements.
